@@ -1,9 +1,45 @@
 import React, { useState, useEffect } from 'react';
 import { supabase, isSupabaseMock } from '../utils/supabaseClient';
 import { 
-  BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, 
+  BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, 
   PieChart, Pie, Cell, AreaChart, Area 
 } from 'recharts';
+
+function CustomResponsiveContainer({ children, height = 300 }) {
+  const containerRef = React.useRef(null);
+  const [width, setWidth] = React.useState(0);
+
+  React.useEffect(() => {
+    if (!containerRef.current) return;
+    
+    setWidth(containerRef.current.getBoundingClientRect().width || 300);
+
+    const observer = new ResizeObserver((entries) => {
+      if (entries[0]) {
+        setWidth(entries[0].contentRect.width || 300);
+      }
+    });
+    
+    observer.observe(containerRef.current);
+    return () => observer.disconnect();
+  }, []);
+
+  const renderedChildren = React.Children.map(children, (child) => {
+    if (React.isValidElement(child)) {
+      return React.cloneElement(child, {
+        width: width,
+        height: height
+      });
+    }
+    return child;
+  });
+
+  return (
+    <div ref={containerRef} className="w-full flex items-center justify-center" style={{ height: `${height}px` }}>
+      {width > 0 ? renderedChildren : <div className="text-slate-500 text-xs font-mono">Drawing...</div>}
+    </div>
+  );
+}
 import { 
   Users, Star, MapPin, TrendingUp, Plane, RefreshCw, 
   AlertCircle, GraduationCap, Calendar, Laptop 
@@ -268,7 +304,7 @@ export default function Dashboard() {
                 <MapPin className="w-4 h-4 text-sky-light" /> State Feasibility Distribution (Top 8)
               </h3>
               <div className="h-64 sm:h-72 w-full text-xs">
-                <ResponsiveContainer width="100%" height="100%">
+                <CustomResponsiveContainer height={260}>
                   <BarChart data={stateChartData} margin={{ top: 10, right: 10, left: -25, bottom: 5 }}>
                     <CartesianGrid strokeDasharray="3 3" stroke="#ffffff0a" />
                     <XAxis dataKey="name" stroke="#94a3b8" />
@@ -280,7 +316,7 @@ export default function Dashboard() {
                       ))}
                     </Bar>
                   </BarChart>
-                </ResponsiveContainer>
+                </CustomResponsiveContainer>
               </div>
             </div>
 
@@ -290,8 +326,8 @@ export default function Dashboard() {
                 <Clock className="w-4 h-4 text-gold-main" /> Enrollment Timeline Preferences
               </h3>
               <div className="h-64 sm:h-72 w-full text-xs flex flex-col sm:flex-row items-center justify-center gap-4">
-                <div className="h-48 sm:h-full w-full sm:w-[60%]">
-                  <ResponsiveContainer width="100%" height="100%">
+                <div className="h-48 sm:h-full w-full sm:w-[60%] flex items-center justify-center">
+                  <CustomResponsiveContainer height={220}>
                     <PieChart>
                       <Pie
                         data={timelineChartData}
@@ -308,7 +344,7 @@ export default function Dashboard() {
                       </Pie>
                       <Tooltip contentStyle={{ backgroundColor: '#070F2B', borderColor: 'rgba(255,255,255,0.1)', color: '#ffffff' }} />
                     </PieChart>
-                  </ResponsiveContainer>
+                  </CustomResponsiveContainer>
                 </div>
                 
                 {/* Legend list */}
@@ -334,7 +370,7 @@ export default function Dashboard() {
                 <GraduationCap className="w-4 h-4 text-emerald-400" /> Syllabus Modules Demand Rank
               </h3>
               <div className="h-72 sm:h-80 w-full text-xs">
-                <ResponsiveContainer width="100%" height="100%">
+                <CustomResponsiveContainer height={280}>
                   <BarChart 
                     data={topicChartData} 
                     layout="vertical"
@@ -350,7 +386,7 @@ export default function Dashboard() {
                       ))}
                     </Bar>
                   </BarChart>
-                </ResponsiveContainer>
+                </CustomResponsiveContainer>
               </div>
             </div>
 
@@ -360,8 +396,8 @@ export default function Dashboard() {
                 <Laptop className="w-4 h-4 text-sky-light" /> Preferred Training Mode
               </h3>
               <div className="h-64 sm:h-72 w-full text-xs flex flex-col sm:flex-row items-center justify-center gap-4">
-                <div className="h-48 sm:h-full w-full sm:w-[60%]">
-                  <ResponsiveContainer width="100%" height="100%">
+                <div className="h-48 sm:h-full w-full sm:w-[60%] flex items-center justify-center">
+                  <CustomResponsiveContainer height={220}>
                     <PieChart>
                       <Pie
                         data={modeChartData}
@@ -376,7 +412,7 @@ export default function Dashboard() {
                       </Pie>
                       <Tooltip contentStyle={{ backgroundColor: '#070F2B', borderColor: 'rgba(255,255,255,0.1)', color: '#ffffff' }} />
                     </PieChart>
-                  </ResponsiveContainer>
+                  </CustomResponsiveContainer>
                 </div>
                 
                 {/* Legend list */}
@@ -402,7 +438,7 @@ export default function Dashboard() {
                 <Calendar className="w-4 h-4 text-gold-main" /> Age Groups
               </h3>
               <div className="h-56 w-full text-xs">
-                <ResponsiveContainer width="100%" height="100%">
+                <CustomResponsiveContainer height={220}>
                   <BarChart data={ageChartData} margin={{ top: 10, right: 10, left: -25, bottom: 5 }}>
                     <CartesianGrid strokeDasharray="3 3" stroke="#ffffff0a" />
                     <XAxis dataKey="name" stroke="#94a3b8" />
@@ -410,7 +446,7 @@ export default function Dashboard() {
                     <Tooltip contentStyle={{ backgroundColor: '#070F2B', borderColor: 'rgba(255,255,255,0.1)', color: '#ffffff' }} />
                     <Bar dataKey="value" fill="#38BDF8" radius={[4, 4, 0, 0]} />
                   </BarChart>
-                </ResponsiveContainer>
+                </CustomResponsiveContainer>
               </div>
             </div>
 
@@ -420,7 +456,7 @@ export default function Dashboard() {
                 <GraduationCap className="w-4 h-4 text-sky-light" /> Qualifications
               </h3>
               <div className="h-56 w-full text-xs">
-                <ResponsiveContainer width="100%" height="100%">
+                <CustomResponsiveContainer height={220}>
                   <BarChart data={qualChartData} margin={{ top: 10, right: 10, left: -25, bottom: 5 }}>
                     <CartesianGrid strokeDasharray="3 3" stroke="#ffffff0a" />
                     <XAxis dataKey="name" stroke="#94a3b8" />
@@ -428,7 +464,7 @@ export default function Dashboard() {
                     <Tooltip contentStyle={{ backgroundColor: '#070F2B', borderColor: 'rgba(255,255,255,0.1)', color: '#ffffff' }} />
                     <Bar dataKey="value" fill="#079992" radius={[4, 4, 0, 0]} />
                   </BarChart>
-                </ResponsiveContainer>
+                </CustomResponsiveContainer>
               </div>
             </div>
 
@@ -438,7 +474,7 @@ export default function Dashboard() {
                 <Star className="w-4 h-4 text-gold-main" /> Commitment Score Scale
               </h3>
               <div className="h-56 w-full text-xs">
-                <ResponsiveContainer width="100%" height="100%">
+                <CustomResponsiveContainer height={220}>
                   <AreaChart data={scoreChartData} margin={{ top: 10, right: 10, left: -25, bottom: 5 }}>
                     <defs>
                       <linearGradient id="colorScore" x1="0" y1="0" x2="0" y2="1">
@@ -452,7 +488,7 @@ export default function Dashboard() {
                     <Tooltip contentStyle={{ backgroundColor: '#070F2B', borderColor: 'rgba(255,255,255,0.1)', color: '#ffffff' }} />
                     <Area type="monotone" dataKey="value" stroke="#D4AF37" fillOpacity={1} fill="url(#colorScore)" />
                   </AreaChart>
-                </ResponsiveContainer>
+                </CustomResponsiveContainer>
               </div>
             </div>
 

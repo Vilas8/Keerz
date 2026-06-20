@@ -119,12 +119,7 @@ export default function AdminLoginModal({ isOpen, onClose, onLoginSuccess }) {
               </div>
             )}
 
-            {/* Helper Note for testing */}
-            <div className="p-3 bg-navy-medium/30 border border-white/5 rounded-xl text-[10px] text-slate-400 leading-normal">
-              <span className="text-gold-main font-semibold block mb-0.5">Demo Auth Credentials:</span>
-              Email: <code className="text-white">keerthanatm2465@gmail.com</code> <br />
-              Password: <code className="text-white">admin</code>
-            </div>
+
 
             {/* Submit */}
             <button
