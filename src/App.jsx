@@ -11,9 +11,21 @@ import Footer from './components/Footer';
 import AdminLoginModal from './components/AdminLoginModal';
 
 function App() {
-  const [currentTab, setCurrentTab] = useState('landing'); // 'landing' or 'dashboard'
+  const [currentTab, setCurrentTab] = useState(() => {
+    try {
+      return sessionStorage.getItem('keerz_current_tab') || 'landing';
+    } catch {
+      return 'landing';
+    }
+  });
   const [submittedLead, setSubmittedLead] = useState(null); // stores submitted form data for popup
-  const [isAdminAuthenticated, setIsAdminAuthenticated] = useState(false);
+  const [isAdminAuthenticated, setIsAdminAuthenticated] = useState(() => {
+    try {
+      return sessionStorage.getItem('keerz_admin_auth') === 'true';
+    } catch {
+      return false;
+    }
+  });
   const [showLoginModal, setShowLoginModal] = useState(false);
 
   const scrollToSection = (id) => {
@@ -36,6 +48,11 @@ function App() {
       setShowLoginModal(true);
     } else {
       setCurrentTab(tab);
+      try {
+        sessionStorage.setItem('keerz_current_tab', tab);
+      } catch (e) {
+        console.error('Session write error:', e);
+      }
     }
   };
 
@@ -91,6 +108,12 @@ function App() {
         onLoginSuccess={() => {
           setIsAdminAuthenticated(true);
           setCurrentTab('dashboard');
+          try {
+            sessionStorage.setItem('keerz_admin_auth', 'true');
+            sessionStorage.setItem('keerz_current_tab', 'dashboard');
+          } catch (e) {
+            console.error('Session write error:', e);
+          }
         }}
       />
     </div>
