@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Plane, CheckCircle2, MapPin, Calendar, Clock, Printer, X } from 'lucide-react';
+import { Plane, CheckCircle2, MapPin, Calendar, Clock, Printer, X, Download, Share2, Loader2 } from 'lucide-react';
+import html2canvas from 'html2canvas';
 
 export default function SuccessPopup({ leadData, onClose }) {
   const [takeoffActive, setTakeoffActive] = useState(false);
@@ -13,10 +14,92 @@ export default function SuccessPopup({ leadData, onClose }) {
     return () => clearTimeout(timer);
   }, []);
 
+  const [downloading, setDownloading] = useState(false);
+  const [sharing, setSharing] = useState(false);
+
   if (!leadData) return null;
 
   const handlePrint = () => {
     window.print();
+  };
+
+  const downloadTicketPng = async () => {
+    const ticketElement = document.getElementById('printable-boarding-ticket');
+    if (!ticketElement) return;
+
+    setDownloading(true);
+    try {
+      await new Promise(r => setTimeout(r, 100));
+      const canvas = await html2canvas(ticketElement, {
+        scale: 2,
+        backgroundColor: null,
+        useCORS: true,
+        logging: false
+      });
+      
+      const image = canvas.toDataURL('image/png');
+      const link = document.createElement('a');
+      link.href = image;
+      link.download = `Keerz_Boarding_Pass_${leadData.full_name.replace(/\s+/g, '_')}.png`;
+      link.click();
+    } catch (err) {
+      console.error('Error generating PNG ticket:', err);
+    } finally {
+      setDownloading(false);
+    }
+  };
+
+  const shareTicket = async () => {
+    const ticketElement = document.getElementById('printable-boarding-ticket');
+    if (!ticketElement) return;
+
+    setSharing(true);
+    try {
+      await new Promise(r => setTimeout(r, 100));
+      const canvas = await html2canvas(ticketElement, {
+        scale: 2,
+        backgroundColor: '#ffffff',
+        useCORS: true,
+        logging: false
+      });
+      
+      canvas.toBlob(async (blob) => {
+        if (!blob) {
+          setSharing(false);
+          return;
+        }
+        
+        try {
+          const file = new File([blob], `Keerz_Aviation_Boarding_Pass.png`, { type: 'image/png' });
+          
+          if (navigator.canShare && navigator.canShare({ files: [file] })) {
+            await navigator.share({
+              files: [file],
+              title: 'Keerz Aviation Academy Boarding Pass',
+              text: `I just registered my interest in the future Keerz Cabin Crew Academy! Preferred Training City: ${leadData.preferred_training_city} ✈️ Join the interest list now!`
+            });
+          } else if (navigator.share) {
+            await navigator.share({
+              title: 'Keerz Aviation Academy',
+              text: `I just registered my interest in the future Keerz Cabin Crew Academy! Preferred Training City: ${leadData.preferred_training_city} ✈️ Join the interest list now!`,
+              url: window.location.origin
+            });
+          } else {
+            const shareText = encodeURIComponent(`I just registered my interest in the future Keerz Cabin Crew Academy! Preferred Training City: ${leadData.preferred_training_city} ✈️ Join here: ${window.location.origin}`);
+            window.open(`https://api.whatsapp.com/send?text=${shareText}`, '_blank');
+          }
+        } catch (shareErr) {
+          console.warn('Web Share failed, attempting fallback:', shareErr);
+          const shareText = encodeURIComponent(`I just registered my interest in the future Keerz Cabin Crew Academy! Preferred Training City: ${leadData.preferred_training_city} ✈️`);
+          window.open(`https://api.whatsapp.com/send?text=${shareText}`, '_blank');
+        } finally {
+          setSharing(false);
+        }
+      }, 'image/png');
+    } catch (err) {
+      console.error('Sharing failed:', err);
+      setSharing(false);
+    }
   };
 
   return (
@@ -198,19 +281,48 @@ export default function SuccessPopup({ leadData, onClose }) {
 
             </div>
 
-            {/* Print action buttons */}
-            <div className="flex items-center justify-center gap-4 mt-8 print:hidden">
-              <button
-                onClick={handlePrint}
-                className="flex items-center gap-2 px-6 py-2.5 rounded-lg bg-navy-medium border border-white/10 text-white font-medium hover:bg-navy-light transition-all duration-200 text-sm cursor-pointer"
-              >
-                <Printer className="w-4 h-4 text-sky-light" />
-                <span>Print Ticket</span>
-              </button>
+            {/* Print / Save / Share action buttons */}
+            <div className="flex flex-col sm:flex-row items-center justify-center gap-3 mt-8 print:hidden w-full">
+              
+              <div className="flex flex-wrap items-center justify-center gap-3 w-full sm:w-auto">
+                <button
+                  onClick={handlePrint}
+                  className="flex items-center justify-center gap-2 px-5 py-2.5 rounded-lg bg-navy-medium border border-white/10 text-white font-medium hover:bg-navy-light transition-all duration-200 text-xs sm:text-sm cursor-pointer w-full sm:w-auto"
+                >
+                  <Printer className="w-4 h-4 text-sky-light" />
+                  <span>Print Ticket</span>
+                </button>
+
+                <button
+                  onClick={downloadTicketPng}
+                  disabled={downloading}
+                  className="flex items-center justify-center gap-2 px-5 py-2.5 rounded-lg bg-navy-medium border border-white/10 text-white font-medium hover:bg-navy-light transition-all duration-200 text-xs sm:text-sm cursor-pointer disabled:opacity-50 w-full sm:w-auto"
+                >
+                  {downloading ? (
+                    <Loader2 className="w-4 h-4 animate-spin text-sky-light" />
+                  ) : (
+                    <Download className="w-4 h-4 text-sky-light" />
+                  )}
+                  <span>Save Image</span>
+                </button>
+
+                <button
+                  onClick={shareTicket}
+                  disabled={sharing}
+                  className="flex items-center justify-center gap-2 px-5 py-2.5 rounded-lg bg-navy-medium border border-white/10 text-white font-medium hover:bg-navy-light transition-all duration-200 text-xs sm:text-sm cursor-pointer disabled:opacity-50 w-full sm:w-auto"
+                >
+                  {sharing ? (
+                    <Loader2 className="w-4 h-4 animate-spin text-gold-main" />
+                  ) : (
+                    <Share2 className="w-4 h-4 text-gold-main" />
+                  )}
+                  <span>Share Pass</span>
+                </button>
+              </div>
               
               <button
                 onClick={onClose}
-                className="px-8 py-2.5 rounded-lg bg-gradient-to-r from-gold-main to-gold-light text-navy-dark font-bold hover:scale-[1.02] active:scale-[0.98] transition-all duration-200 text-sm cursor-pointer"
+                className="px-8 py-2.5 rounded-lg bg-gradient-to-r from-gold-main to-gold-light text-navy-dark font-bold hover:scale-[1.02] active:scale-[0.98] transition-all duration-200 text-xs sm:text-sm cursor-pointer w-full sm:w-auto shrink-0"
               >
                 Done
               </button>

@@ -3,7 +3,7 @@ import { Plane, BarChart3, HelpCircle, Award, CheckCircle } from 'lucide-react';
 
 export default function Header({ currentTab, setCurrentTab, scrollToSection }) {
   return (
-    <header className="sticky top-0 z-50 w-full glass-panel border-b border-white/10 px-4 py-3 sm:px-6 md:px-8">
+    <header className="sticky top-0 z-50 w-full bg-navy-dark border-b border-white/10 px-4 py-3 sm:px-6 md:px-8 shadow-lg shadow-black/15">
       <div className="max-w-7xl mx-auto flex items-center justify-between">
         
         {/* Logo */}

@@ -128,3 +128,33 @@ body {
   background-color: #070F2B;
   box-shadow: inset 3px 0 3px rgba(0, 0, 0, 0.2);
 }
+
+/* Print Overrides - Forces single page landscape ticket print */
+@media print {
+  body * {
+    visibility: hidden;
+  }
+  #printable-boarding-ticket, #printable-boarding-ticket * {
+    visibility: visible;
+  }
+  #printable-boarding-ticket {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 100%;
+    border: 2px solid #cbd5e1 !important;
+    border-radius: 16px !important;
+    box-shadow: none !important;
+    background-color: #ffffff !important;
+    color: #0f172a !important;
+    padding: 1.5rem !important;
+  }
+  @page {
+    size: landscape;
+    margin: 1cm;
+  }
+  * {
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+}

@@ -8,10 +8,13 @@ import SurveyForm from './components/SurveyForm';
 import SuccessPopup from './components/SuccessPopup';
 import Dashboard from './components/Dashboard';
 import Footer from './components/Footer';
+import AdminLoginModal from './components/AdminLoginModal';
 
 function App() {
   const [currentTab, setCurrentTab] = useState('landing'); // 'landing' or 'dashboard'
   const [submittedLead, setSubmittedLead] = useState(null); // stores submitted form data for popup
+  const [isAdminAuthenticated, setIsAdminAuthenticated] = useState(false);
+  const [showLoginModal, setShowLoginModal] = useState(false);
 
   const scrollToSection = (id) => {
     const element = document.getElementById(id);
@@ -28,12 +31,20 @@ function App() {
     setSubmittedLead(leadData);
   };
 
+  const handleSetTab = (tab) => {
+    if (tab === 'dashboard' && !isAdminAuthenticated) {
+      setShowLoginModal(true);
+    } else {
+      setCurrentTab(tab);
+    }
+  };
+
   return (
     <div className="min-h-screen bg-navy-dark text-slate-100 flex flex-col font-sans selection:bg-gold-main selection:text-navy-dark">
       {/* Sticky Premium Header */}
       <Header 
         currentTab={currentTab} 
-        setCurrentTab={setCurrentTab} 
+        setCurrentTab={handleSetTab} 
         scrollToSection={scrollToSection} 
       />
 
@@ -61,7 +72,7 @@ function App() {
 
       {/* Modern Trust Footer */}
       <Footer 
-        setCurrentTab={setCurrentTab} 
+        setCurrentTab={handleSetTab} 
         scrollToSection={scrollToSection} 
       />
 
@@ -72,8 +83,19 @@ function App() {
           onClose={() => setSubmittedLead(null)} 
         />
       )}
+
+      {/* Admin Login Dialog */}
+      <AdminLoginModal 
+        isOpen={showLoginModal}
+        onClose={() => setShowLoginModal(false)}
+        onLoginSuccess={() => {
+          setIsAdminAuthenticated(true);
+          setCurrentTab('dashboard');
+        }}
+      />
     </div>
   );
 }
 
 export default App;
+

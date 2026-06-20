@@ -78,7 +78,7 @@ export default function Footer({ setCurrentTab, scrollToSection }) {
           &copy; {new Date().getFullYear()} Keerz Aviation Academy Initiative. All Rights Reserved.
         </div>
         <div className="flex items-center gap-4">
-          <span className="flex items-center gap-1"><Mail className="w-3.5 h-3.5" /> contact@keerz.in</span>
+          <span className="flex items-center gap-1"><Mail className="w-3.5 h-3.5" /> keerthanatm2465@gmail.com</span>
           <span className="flex items-center gap-1"><Globe className="w-3.5 h-3.5" /> India</span>
         </div>
       </div>
