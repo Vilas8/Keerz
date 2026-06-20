@@ -1,17 +1,19 @@
 services:
   - type: web
     name: aeroaura-academy-research
-    env: static
+    runtime: static
     buildCommand: npm run build
-    publishPath: dist
+    staticPublishPath: ./dist
     headers:
       - path: /*
-        headers:
-          - key: Cache-Control
-            value: max-age=0, must-revalidate
-          - key: X-Frame-Options
-            value: DENY
-          - key: X-Content-Type-Options
-            value: nosniff
-          - key: Referrer-Policy
-            value: strict-origin-when-cross-origin
+        name: Cache-Control
+        value: max-age=0, must-revalidate
+      - path: /*
+        name: X-Frame-Options
+        value: DENY
+      - path: /*
+        name: X-Content-Type-Options
+        value: nosniff
+      - path: /*
+        name: Referrer-Policy
+        value: strict-origin-when-cross-origin
