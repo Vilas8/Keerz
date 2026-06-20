@@ -5,6 +5,10 @@ import html2canvas from 'html2canvas';
 
 export default function SuccessPopup({ leadData, onClose }) {
   const [takeoffActive, setTakeoffActive] = useState(false);
+  const [downloading, setDownloading] = useState(false);
+  const [sharing, setSharing] = useState(false);
+  const [ticketImage, setTicketImage] = useState(null);
+  const [ticketBlob, setTicketBlob] = useState(null);
 
   useEffect(() => {
     // Trigger plane animation shortly after popup loads
@@ -14,8 +18,40 @@ export default function SuccessPopup({ leadData, onClose }) {
     return () => clearTimeout(timer);
   }, []);
 
-  const [downloading, setDownloading] = useState(false);
-  const [sharing, setSharing] = useState(false);
+  useEffect(() => {
+    // Pre-generate the ticket image after the component renders and fonts are settled
+    const generateTicket = async () => {
+      const ticketElement = document.getElementById('printable-boarding-ticket');
+      if (!ticketElement) return;
+
+      try {
+        // Wait a small duration to ensure rendering is complete and fonts are loaded
+        await new Promise(r => setTimeout(r, 800));
+        
+        const html2canvasFn = html2canvas.default || html2canvas;
+        const canvas = await html2canvasFn(ticketElement, {
+          scale: 2,
+          backgroundColor: '#ffffff',
+          useCORS: true,
+          allowTaint: false,
+          logging: false
+        });
+
+        const dataUrl = canvas.toDataURL('image/png');
+        setTicketImage(dataUrl);
+
+        canvas.toBlob((blob) => {
+          if (blob) {
+            setTicketBlob(blob);
+          }
+        }, 'image/png');
+      } catch (err) {
+        console.error('Failed to pre-generate ticket image:', err);
+      }
+    };
+
+    generateTicket();
+  }, [leadData]);
 
   if (!leadData) return null;
 
@@ -23,43 +59,54 @@ export default function SuccessPopup({ leadData, onClose }) {
     window.print();
   };
 
-  const downloadTicketPng = async () => {
+  const generateAndDownloadOnDemand = async () => {
     const ticketElement = document.getElementById('printable-boarding-ticket');
     if (!ticketElement) return;
 
     setDownloading(true);
     try {
       await new Promise(r => setTimeout(r, 100));
-      const canvas = await html2canvas(ticketElement, {
+      const html2canvasFn = html2canvas.default || html2canvas;
+      const canvas = await html2canvasFn(ticketElement, {
         scale: 2,
-        backgroundColor: null,
+        backgroundColor: '#ffffff',
         useCORS: true,
+        allowTaint: false,
         logging: false
       });
       
-      const image = canvas.toDataURL('image/png');
-      const link = document.createElement('a');
-      link.href = image;
-      link.download = `Keerz_Boarding_Pass_${leadData.full_name.replace(/\s+/g, '_')}.png`;
-      link.click();
+      canvas.toBlob((blob) => {
+        if (blob) {
+          const url = URL.createObjectURL(blob);
+          const link = document.createElement('a');
+          link.href = url;
+          link.download = `Keerz_Boarding_Pass_${leadData.full_name.replace(/\s+/g, '_')}.png`;
+          document.body.appendChild(link);
+          link.click();
+          document.body.removeChild(link);
+          URL.revokeObjectURL(url);
+        }
+      }, 'image/png');
     } catch (err) {
-      console.error('Error generating PNG ticket:', err);
+      console.error('Error generating PNG ticket on demand:', err);
     } finally {
       setDownloading(false);
     }
   };
 
-  const shareTicket = async () => {
+  const generateAndShareOnDemand = async () => {
     const ticketElement = document.getElementById('printable-boarding-ticket');
     if (!ticketElement) return;
 
     setSharing(true);
     try {
       await new Promise(r => setTimeout(r, 100));
-      const canvas = await html2canvas(ticketElement, {
+      const html2canvasFn = html2canvas.default || html2canvas;
+      const canvas = await html2canvasFn(ticketElement, {
         scale: 2,
         backgroundColor: '#ffffff',
         useCORS: true,
+        allowTaint: false,
         logging: false
       });
       
@@ -68,43 +115,78 @@ export default function SuccessPopup({ leadData, onClose }) {
           setSharing(false);
           return;
         }
-        
-        try {
-          const file = new File([blob], `Keerz_Aviation_Boarding_Pass.png`, { type: 'image/png' });
-          
-          if (navigator.canShare && navigator.canShare({ files: [file] })) {
-            await navigator.share({
-              files: [file],
-              title: 'Keerz Aviation Academy Boarding Pass',
-              text: `I just registered my interest in the future Keerz Cabin Crew Academy! Preferred Training City: ${leadData.preferred_training_city} ✈️ Join the interest list now!`
-            });
-          } else if (navigator.share) {
-            await navigator.share({
-              title: 'Keerz Aviation Academy',
-              text: `I just registered my interest in the future Keerz Cabin Crew Academy! Preferred Training City: ${leadData.preferred_training_city} ✈️ Join the interest list now!`,
-              url: window.location.origin
-            });
-          } else {
-            const shareText = encodeURIComponent(`I just registered my interest in the future Keerz Cabin Crew Academy! Preferred Training City: ${leadData.preferred_training_city} ✈️ Join here: ${window.location.origin}`);
-            window.open(`https://api.whatsapp.com/send?text=${shareText}`, '_blank');
-          }
-        } catch (shareErr) {
-          console.warn('Web Share failed, attempting fallback:', shareErr);
-          const shareText = encodeURIComponent(`I just registered my interest in the future Keerz Cabin Crew Academy! Preferred Training City: ${leadData.preferred_training_city} ✈️`);
-          window.open(`https://api.whatsapp.com/send?text=${shareText}`, '_blank');
-        } finally {
-          setSharing(false);
-        }
+        await shareBlob(blob);
       }, 'image/png');
     } catch (err) {
-      console.error('Sharing failed:', err);
+      console.error('Sharing failed on demand:', err);
       setSharing(false);
     }
   };
 
+  const shareBlob = async (blob) => {
+    try {
+      const file = new File([blob], `Keerz_Aviation_Boarding_Pass.png`, { type: 'image/png' });
+      
+      if (navigator.canShare && navigator.canShare({ files: [file] })) {
+        await navigator.share({
+          files: [file],
+          title: 'Keerz Aviation Academy Boarding Pass',
+          text: `I just registered my interest in the future Keerz Cabin Crew Academy! Preferred Training City: ${leadData.preferred_training_city} ✈️ Join the interest list now!`
+        });
+      } else if (navigator.share) {
+        await navigator.share({
+          title: 'Keerz Aviation Academy',
+          text: `I just registered my interest in the future Keerz Cabin Crew Academy! Preferred Training City: ${leadData.preferred_training_city} ✈️ Join the interest list now!`,
+          url: window.location.origin
+        });
+      } else {
+        const shareText = encodeURIComponent(`I just registered my interest in the future Keerz Cabin Crew Academy! Preferred Training City: ${leadData.preferred_training_city} ✈️ Join here: ${window.location.origin}`);
+        window.open(`https://api.whatsapp.com/send?text=${shareText}`, '_blank');
+      }
+    } catch (shareErr) {
+      console.warn('Web Share failed, attempting fallback:', shareErr);
+      const shareText = encodeURIComponent(`I just registered my interest in the future Keerz Cabin Crew Academy! Preferred Training City: ${leadData.preferred_training_city} ✈️`);
+      window.open(`https://api.whatsapp.com/send?text=${shareText}`, '_blank');
+    } finally {
+      setSharing(false);
+    }
+  };
+
+  const downloadTicketPng = async () => {
+    if (!ticketImage && !ticketBlob) {
+      await generateAndDownloadOnDemand();
+      return;
+    }
+
+    try {
+      const url = ticketImage || URL.createObjectURL(ticketBlob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = `Keerz_Boarding_Pass_${leadData.full_name.replace(/\s+/g, '_')}.png`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      if (!ticketImage && ticketBlob) {
+        URL.revokeObjectURL(url);
+      }
+    } catch (err) {
+      console.error('Error downloading PNG ticket:', err);
+    }
+  };
+
+  const shareTicket = async () => {
+    if (!ticketBlob) {
+      await generateAndShareOnDemand();
+      return;
+    }
+
+    setSharing(true);
+    await shareBlob(ticketBlob);
+  };
+
   return (
     <AnimatePresence>
-      <div className="fixed inset-0 z-50 overflow-y-auto bg-navy-dark/80 backdrop-blur-md flex items-center justify-center p-4 sm:p-6 md:p-10">
+      <div className="fixed inset-0 z-50 overflow-y-auto bg-navy-dark/80 backdrop-blur-md flex items-center justify-center p-4 sm:p-6 md:p-10 print-container">
         
         {/* Modal Panel */}
         <motion.div
@@ -117,13 +199,13 @@ export default function SuccessPopup({ leadData, onClose }) {
           {/* Close button */}
           <button 
             onClick={onClose}
-            className="absolute top-4 right-4 text-slate-400 hover:text-white p-2 rounded-full hover:bg-white/5 transition-colors cursor-pointer z-20"
+            className="absolute top-4 right-4 text-slate-400 hover:text-white p-2 rounded-full hover:bg-white/5 transition-colors cursor-pointer z-20 print:hidden"
           >
             <X className="w-5 h-5" />
           </button>
 
           {/* Success Banner */}
-          <div className="bg-gradient-to-r from-navy-dark to-navy-medium p-8 text-center relative overflow-hidden border-b border-gold-main/20">
+          <div className="bg-gradient-to-r from-navy-dark to-navy-medium p-8 text-center relative overflow-hidden border-b border-gold-main/20 print:hidden">
             {/* Takeoff aircraft silhouette */}
             <div className="absolute inset-0 z-0 pointer-events-none opacity-10 flex items-center justify-center">
               <Plane className="w-64 h-64 text-white -rotate-12" />

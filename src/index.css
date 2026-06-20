@@ -131,30 +131,141 @@ body {
 
 /* Print Overrides - Forces single page landscape ticket print */
 @media print {
-  body * {
-    visibility: hidden;
+  /* Hide the rest of the site */
+  #root > div > *:not(.print-container) {
+    display: none !important;
   }
-  #printable-boarding-ticket, #printable-boarding-ticket * {
-    visibility: visible;
-  }
-  #printable-boarding-ticket {
-    position: absolute;
-    left: 0;
-    top: 0;
-    width: 100%;
-    border: 2px solid #cbd5e1 !important;
-    border-radius: 16px !important;
-    box-shadow: none !important;
+
+  /* Make sure body and html are collapsed and background is white */
+  html, body {
     background-color: #ffffff !important;
-    color: #0f172a !important;
-    padding: 1.5rem !important;
+    background-image: none !important;
+    color: #000000 !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    height: auto !important;
+    min-height: 0 !important;
+    width: 100% !important;
+    overflow: visible !important;
   }
+
+  /* Reset outer popup layout for printing */
+  .print-container {
+    position: static !important;
+    display: block !important;
+    background: transparent !important;
+    backdrop-filter: none !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    overflow: visible !important;
+    z-index: auto !important;
+    width: 100% !important;
+  }
+
+  /* Reset motion.div wrapper (modal panel) */
+  .print-container > div {
+    position: relative !important;
+    max-width: 100% !important;
+    width: 100% !important;
+    background-color: transparent !important;
+    border: none !important;
+    box-shadow: none !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    border-radius: 0 !important;
+  }
+
+  /* Hide non-printable elements */
+  .print\:hidden {
+    display: none !important;
+  }
+
+  /* Style the ticket container for print */
+  #printable-boarding-ticket {
+    display: block !important;
+    position: relative !important;
+    left: 0 !important;
+    top: 0 !important;
+    width: 100% !important;
+    max-width: 750px !important; /* Safe print width */
+    margin: 0 auto !important;
+    border: 2px solid #000000 !important;
+    border-radius: 12px !important;
+    background-color: #ffffff !important;
+    color: #070F2B !important;
+    box-shadow: none !important;
+    padding: 20px !important;
+    page-break-inside: avoid !important;
+  }
+
+  /* Adjust page rules */
   @page {
     size: landscape;
-    margin: 1cm;
+    margin: 0.8cm;
   }
+
   * {
     -webkit-print-color-adjust: exact !important;
     print-color-adjust: exact !important;
   }
+}
+
+/* Printable ticket styles override for html2canvas and printing */
+#printable-boarding-ticket {
+  background-color: #ffffff !important;
+  color: #070F2B !important;
+  font-family: 'Outfit', 'Inter', system-ui, sans-serif !important;
+}
+
+#printable-boarding-ticket span,
+#printable-boarding-ticket div {
+  color: inherit;
+}
+
+#printable-boarding-ticket .text-navy-dark {
+  color: #070F2B !important;
+}
+
+#printable-boarding-ticket .text-sky-main {
+  color: #079992 !important;
+}
+
+#printable-boarding-ticket .text-sky-light {
+  color: #00cec9 !important;
+}
+
+#printable-boarding-ticket .text-gold-dark {
+  color: #AA7C11 !important;
+}
+
+#printable-boarding-ticket .text-gold-main {
+  color: #D4AF37 !important;
+}
+
+#printable-boarding-ticket .text-slate-400 {
+  color: #94a3b8 !important;
+}
+
+#printable-boarding-ticket .text-emerald-600 {
+  color: #059669 !important;
+}
+
+#printable-boarding-ticket .border-slate-100 {
+  border-color: #f1f5f9 !important;
+}
+
+#printable-boarding-ticket .border-slate-200 {
+  border-color: #e2e8f0 !important;
+}
+
+#printable-boarding-ticket .border-slate-300 {
+  border-color: #cbd5e1 !important;
+}
+
+#printable-boarding-ticket .bg-black {
+  background-color: #000000 !important;
+}
+
+#printable-boarding-ticket .bg-black\/5 {
+  background-color: rgba(0, 0, 0, 0.05) !important;
 }

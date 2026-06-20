@@ -1,48 +1,12 @@
-import React, { useState, useEffect, useRef, Children, isValidElement, cloneElement } from 'react';
+import React, { useState, useEffect } from 'react';
 import { supabase, isSupabaseMock } from '../utils/supabaseClient';
 import { 
-  BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, 
+  ResponsiveContainer, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, 
   PieChart, Pie, Cell, AreaChart, Area 
 } from 'recharts';
-
-function CustomResponsiveContainer({ children, height = 300 }) {
-  const containerRef = useRef(null);
-  const [width, setWidth] = useState(0);
-
-  useEffect(() => {
-    if (!containerRef.current) return;
-    
-    setWidth(containerRef.current.getBoundingClientRect().width || 300);
-
-    const observer = new ResizeObserver((entries) => {
-      if (entries[0]) {
-        setWidth(entries[0].contentRect.width || 300);
-      }
-    });
-    
-    observer.observe(containerRef.current);
-    return () => observer.disconnect();
-  }, []);
-
-  const renderedChildren = Children.map(children, (child) => {
-    if (isValidElement(child)) {
-      return cloneElement(child, {
-        width: width,
-        height: height
-      });
-    }
-    return child;
-  });
-
-  return (
-    <div ref={containerRef} className="w-full flex items-center justify-center" style={{ height: `${height}px` }}>
-      {width > 0 ? renderedChildren : <div className="text-slate-500 text-xs font-mono">Drawing...</div>}
-    </div>
-  );
-}
 import { 
   Users, Star, MapPin, TrendingUp, Plane, RefreshCw, 
-  AlertCircle, GraduationCap, Calendar, Laptop 
+  AlertCircle, GraduationCap, Calendar, Laptop, Clock 
 } from 'lucide-react';
 
 const COLORS = ['#D4AF37', '#0EA5E9', '#079992', '#535C91', '#E11D48', '#10B981', '#F59E0B', '#8B5CF6'];
@@ -80,11 +44,11 @@ export default function Dashboard() {
   
   // Seriousness score average
   const avgSeriousness = totalLeads > 0 
-    ? (safeLeads.reduce((acc, curr) => acc + curr.seriousness_score, 0) / totalLeads).toFixed(1) 
+    ? (safeLeads.reduce((acc, curr) => acc + (Number(curr?.seriousness_score) || 3), 0) / totalLeads).toFixed(1) 
     : 0;
 
   // Immediate joiners percentage (Immediately 0-1 month)
-  const immediateJoiners = safeLeads.filter(l => l.joining_timeline && l.joining_timeline.includes('Immediately')).length;
+  const immediateJoiners = safeLeads.filter(l => l && l.joining_timeline && l.joining_timeline.includes('Immediately')).length;
   const immediatePercent = totalLeads > 0 
     ? Math.round((immediateJoiners / totalLeads) * 100) 
     : 0;
@@ -93,6 +57,7 @@ export default function Dashboard() {
   const stateCounts = {};
   const cityCounts = {};
   safeLeads.forEach(l => {
+    if (!l) return;
     if (l.state) stateCounts[l.state] = (stateCounts[l.state] || 0) + 1;
     if (l.preferred_training_city) cityCounts[l.preferred_training_city] = (cityCounts[l.preferred_training_city] || 0) + 1;
   });
@@ -109,6 +74,7 @@ export default function Dashboard() {
   // 2. Chart: Timeline demand
   const timelineCounts = {};
   safeLeads.forEach(l => {
+    if (!l) return;
     const t = l.joining_timeline || 'Exploring';
     timelineCounts[t] = (timelineCounts[t] || 0) + 1;
   });
@@ -117,6 +83,7 @@ export default function Dashboard() {
   // 3. Chart: Training Mode
   const modeCounts = {};
   safeLeads.forEach(l => {
+    if (!l) return;
     const m = l.training_mode || 'Hybrid';
     modeCounts[m] = (modeCounts[m] || 0) + 1;
   });
@@ -125,9 +92,24 @@ export default function Dashboard() {
   // 4. Chart: Top Topics
   const topicCounts = {};
   safeLeads.forEach(l => {
-    const topics = l.selected_training_topics || [];
+    if (!l) return;
+    let topics = [];
+    if (Array.isArray(l.selected_training_topics)) {
+      topics = l.selected_training_topics;
+    } else if (typeof l.selected_training_topics === 'string') {
+      try {
+        const parsed = JSON.parse(l.selected_training_topics);
+        if (Array.isArray(parsed)) topics = parsed;
+      } catch {
+        if (l.selected_training_topics.startsWith('{') && l.selected_training_topics.endsWith('}')) {
+          topics = l.selected_training_topics.slice(1, -1).split(',').map(s => s.trim().replace(/^"|"$/g, ''));
+        } else {
+          topics = l.selected_training_topics.split(',').map(s => s.trim());
+        }
+      }
+    }
     topics.forEach(t => {
-      topicCounts[t] = (topicCounts[t] || 0) + 1;
+      if (t) topicCounts[t] = (topicCounts[t] || 0) + 1;
     });
   });
   const topicChartData = Object.entries(topicCounts)
@@ -137,6 +119,7 @@ export default function Dashboard() {
   // 5. Chart: Age Distribution
   const ageCounts = {};
   safeLeads.forEach(l => {
+    if (!l) return;
     const a = l.age_group || '18-20';
     ageCounts[a] = (ageCounts[a] || 0) + 1;
   });
@@ -145,6 +128,7 @@ export default function Dashboard() {
   // 6. Chart: Qualification Distribution
   const qualCounts = {};
   safeLeads.forEach(l => {
+    if (!l) return;
     const q = l.qualification || '12th Pass';
     qualCounts[q] = (qualCounts[q] || 0) + 1;
   });
@@ -153,6 +137,7 @@ export default function Dashboard() {
   // 7. Chart: Seriousness score distribution
   const scoreCounts = { 1:0, 2:0, 3:0, 4:0, 5:0 };
   safeLeads.forEach(l => {
+    if (!l) return;
     const s = l.seriousness_score || 3;
     scoreCounts[s] = (scoreCounts[s] || 0) + 1;
   });
@@ -305,7 +290,7 @@ export default function Dashboard() {
                 <MapPin className="w-4 h-4 text-sky-light" /> State Feasibility Distribution (Top 8)
               </h3>
               <div className="h-64 sm:h-72 w-full text-xs">
-                <CustomResponsiveContainer height={260}>
+                <ResponsiveContainer width="100%" height={260}>
                   <BarChart data={stateChartData} margin={{ top: 10, right: 10, left: -25, bottom: 5 }}>
                     <CartesianGrid strokeDasharray="3 3" stroke="#ffffff0a" />
                     <XAxis dataKey="name" stroke="#94a3b8" />
@@ -317,7 +302,7 @@ export default function Dashboard() {
                       ))}
                     </Bar>
                   </BarChart>
-                </CustomResponsiveContainer>
+                </ResponsiveContainer>
               </div>
             </div>
 
@@ -328,7 +313,7 @@ export default function Dashboard() {
               </h3>
               <div className="h-64 sm:h-72 w-full text-xs flex flex-col sm:flex-row items-center justify-center gap-4">
                 <div className="h-48 sm:h-full w-full sm:w-[60%] flex items-center justify-center">
-                  <CustomResponsiveContainer height={220}>
+                  <ResponsiveContainer width="100%" height={220}>
                     <PieChart>
                       <Pie
                         data={timelineChartData}
@@ -345,7 +330,7 @@ export default function Dashboard() {
                       </Pie>
                       <Tooltip contentStyle={{ backgroundColor: '#070F2B', borderColor: 'rgba(255,255,255,0.1)', color: '#ffffff' }} />
                     </PieChart>
-                  </CustomResponsiveContainer>
+                  </ResponsiveContainer>
                 </div>
                 
                 {/* Legend list */}
@@ -371,7 +356,7 @@ export default function Dashboard() {
                 <GraduationCap className="w-4 h-4 text-emerald-400" /> Syllabus Modules Demand Rank
               </h3>
               <div className="h-72 sm:h-80 w-full text-xs">
-                <CustomResponsiveContainer height={280}>
+                <ResponsiveContainer width="100%" height={280}>
                   <BarChart 
                     data={topicChartData} 
                     layout="vertical"
@@ -387,7 +372,7 @@ export default function Dashboard() {
                       ))}
                     </Bar>
                   </BarChart>
-                </CustomResponsiveContainer>
+                </ResponsiveContainer>
               </div>
             </div>
 
@@ -398,7 +383,7 @@ export default function Dashboard() {
               </h3>
               <div className="h-64 sm:h-72 w-full text-xs flex flex-col sm:flex-row items-center justify-center gap-4">
                 <div className="h-48 sm:h-full w-full sm:w-[60%] flex items-center justify-center">
-                  <CustomResponsiveContainer height={220}>
+                  <ResponsiveContainer width="100%" height={220}>
                     <PieChart>
                       <Pie
                         data={modeChartData}
@@ -413,7 +398,7 @@ export default function Dashboard() {
                       </Pie>
                       <Tooltip contentStyle={{ backgroundColor: '#070F2B', borderColor: 'rgba(255,255,255,0.1)', color: '#ffffff' }} />
                     </PieChart>
-                  </CustomResponsiveContainer>
+                  </ResponsiveContainer>
                 </div>
                 
                 {/* Legend list */}
@@ -439,7 +424,7 @@ export default function Dashboard() {
                 <Calendar className="w-4 h-4 text-gold-main" /> Age Groups
               </h3>
               <div className="h-56 w-full text-xs">
-                <CustomResponsiveContainer height={220}>
+                <ResponsiveContainer width="100%" height={220}>
                   <BarChart data={ageChartData} margin={{ top: 10, right: 10, left: -25, bottom: 5 }}>
                     <CartesianGrid strokeDasharray="3 3" stroke="#ffffff0a" />
                     <XAxis dataKey="name" stroke="#94a3b8" />
@@ -447,7 +432,7 @@ export default function Dashboard() {
                     <Tooltip contentStyle={{ backgroundColor: '#070F2B', borderColor: 'rgba(255,255,255,0.1)', color: '#ffffff' }} />
                     <Bar dataKey="value" fill="#38BDF8" radius={[4, 4, 0, 0]} />
                   </BarChart>
-                </CustomResponsiveContainer>
+                </ResponsiveContainer>
               </div>
             </div>
 
@@ -457,7 +442,7 @@ export default function Dashboard() {
                 <GraduationCap className="w-4 h-4 text-sky-light" /> Qualifications
               </h3>
               <div className="h-56 w-full text-xs">
-                <CustomResponsiveContainer height={220}>
+                <ResponsiveContainer width="100%" height={220}>
                   <BarChart data={qualChartData} margin={{ top: 10, right: 10, left: -25, bottom: 5 }}>
                     <CartesianGrid strokeDasharray="3 3" stroke="#ffffff0a" />
                     <XAxis dataKey="name" stroke="#94a3b8" />
@@ -465,7 +450,7 @@ export default function Dashboard() {
                     <Tooltip contentStyle={{ backgroundColor: '#070F2B', borderColor: 'rgba(255,255,255,0.1)', color: '#ffffff' }} />
                     <Bar dataKey="value" fill="#079992" radius={[4, 4, 0, 0]} />
                   </BarChart>
-                </CustomResponsiveContainer>
+                </ResponsiveContainer>
               </div>
             </div>
 
@@ -475,7 +460,7 @@ export default function Dashboard() {
                 <Star className="w-4 h-4 text-gold-main" /> Commitment Score Scale
               </h3>
               <div className="h-56 w-full text-xs">
-                <CustomResponsiveContainer height={220}>
+                <ResponsiveContainer width="100%" height={220}>
                   <AreaChart data={scoreChartData} margin={{ top: 10, right: 10, left: -25, bottom: 5 }}>
                     <defs>
                       <linearGradient id="colorScore" x1="0" y1="0" x2="0" y2="1">
@@ -489,7 +474,7 @@ export default function Dashboard() {
                     <Tooltip contentStyle={{ backgroundColor: '#070F2B', borderColor: 'rgba(255,255,255,0.1)', color: '#ffffff' }} />
                     <Area type="monotone" dataKey="value" stroke="#D4AF37" fillOpacity={1} fill="url(#colorScore)" />
                   </AreaChart>
-                </CustomResponsiveContainer>
+                </ResponsiveContainer>
               </div>
             </div>
 
