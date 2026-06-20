@@ -1,6 +1,6 @@
 services:
   - type: web
-    name: aeroaura-academy-research
+    name: keerz-academy-research
     runtime: static
     buildCommand: npm run build
     staticPublishPath: ./dist

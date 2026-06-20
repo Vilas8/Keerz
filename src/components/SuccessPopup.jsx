@@ -84,7 +84,7 @@ export default function SuccessPopup({ leadData, onClose }) {
                 <div className="flex items-center gap-2">
                   <Plane className="w-5 h-5 text-sky-main transform -rotate-45" />
                   <span className="font-display font-black text-sm tracking-wider text-navy-dark">
-                    AEROAURA ACADEMY
+                    KEERZ ACADEMY
                   </span>
                 </div>
                 <div className="text-right text-[10px] font-mono font-bold text-slate-400">

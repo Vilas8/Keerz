@@ -19,7 +19,7 @@ export default function Footer({ setCurrentTab, scrollToSection }) {
               <Plane className="w-4 h-4 transform -rotate-45" />
             </div>
             <span className="font-display font-bold text-base tracking-wider text-white">
-              AERO<span className="text-gold-main font-normal">AURA</span>
+              KEERZ<span className="text-gold-main font-normal"> AVIATION</span>
             </span>
           </div>
           
@@ -75,10 +75,10 @@ export default function Footer({ setCurrentTab, scrollToSection }) {
       {/* Underbar */}
       <div className="max-w-7xl mx-auto border-t border-white/5 mt-10 pt-6 flex flex-col sm:flex-row items-center justify-between text-[11px] font-mono text-slate-600 gap-4">
         <div>
-          &copy; {new Date().getFullYear()} AeroAura Academy Initiative. All Rights Reserved.
+          &copy; {new Date().getFullYear()} Keerz Aviation Academy Initiative. All Rights Reserved.
         </div>
         <div className="flex items-center gap-4">
-          <span className="flex items-center gap-1"><Mail className="w-3.5 h-3.5" /> contact@aeroaura.org</span>
+          <span className="flex items-center gap-1"><Mail className="w-3.5 h-3.5" /> contact@keerz.in</span>
           <span className="flex items-center gap-1"><Globe className="w-3.5 h-3.5" /> India</span>
         </div>
       </div>

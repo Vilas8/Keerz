@@ -227,7 +227,7 @@ export default function SurveyForm({ onSubmitSuccess }) {
             </div>
             <div>
               <span className="text-[10px] uppercase tracking-[0.2em] text-gold-light font-bold">Boarding Pass Survey</span>
-              <h3 className="font-display font-bold text-lg sm:text-xl tracking-wider -mt-1">AEROAURA TRAINING ACADEMY</h3>
+              <h3 className="font-display font-bold text-lg sm:text-xl tracking-wider -mt-1">KEERZ TRAINING ACADEMY</h3>
             </div>
           </div>
           <div className="text-right sm:text-right flex sm:flex-col items-center sm:items-end justify-between w-full sm:w-auto text-xs font-mono text-slate-300 bg-black/25 px-4 py-2 rounded-xl border border-white/5">

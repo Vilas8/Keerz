@@ -20,10 +20,10 @@ export default function Header({ currentTab, setCurrentTab, scrollToSection }) {
           </div>
           <div>
             <span className="font-display font-bold text-lg sm:text-xl tracking-wider text-white flex items-center gap-1">
-              AERO<span className="text-gold-main font-normal">AURA</span>
+              KEERZ<span className="text-gold-main font-normal"> AVIATION</span>
             </span>
             <span className="block text-[9px] uppercase tracking-[0.2em] text-sky-light/80 font-semibold -mt-1">
-              Aviation Academy Initiative
+              Academy Initiative
             </span>
           </div>
         </div>
