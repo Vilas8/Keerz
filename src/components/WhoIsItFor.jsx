@@ -19,8 +19,8 @@ export default function WhoIsItFor() {
     {
       icon: <UserCheck className="w-6 h-6 text-gold-main" />,
       label: 'Gender Focus',
-      value: 'Female Candidates',
-      detail: 'Designed specifically to empower and train young women for premium airline positions.'
+      value: 'Male & Female Candidates',
+      detail: 'Open to both male and female candidates aiming for premium airline positions.'
     },
     {
       icon: <Star className="w-6 h-6 text-sky-light" />,
@@ -39,7 +39,7 @@ export default function WhoIsItFor() {
             Who Can Participate?
           </h2>
           <p className="text-slate-300 font-light text-base sm:text-lg">
-            This demand validation survey is open to female candidates from all Indian states who fit the standard basic airline eligibility criteria.
+            This demand validation survey is open to candidates from all Indian states who fit the standard basic airline eligibility criteria.
           </p>
         </div>
 

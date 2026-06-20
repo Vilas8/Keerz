@@ -24,7 +24,7 @@ export default function Footer({ setCurrentTab, scrollToSection }) {
           </div>
           
           <p className="text-xs font-light leading-relaxed">
-            Harnessing interest parameters to design world-class Cabin Crew & Ground Support training experiences for aspiring female professionals in India.
+            Harnessing interest parameters to design world-class Cabin Crew & Ground Support training experiences for aspiring aviation professionals in India.
           </p>
         </div>
 

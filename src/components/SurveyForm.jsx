@@ -1,5 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { supabase } from '../utils/supabaseClient';
+import { sendEmails } from '../utils/emailService';
 import { 
   Plane, User, Phone, Mail, MapPin, 
   GraduationCap, Calendar, Compass, Clock, 
@@ -31,7 +32,7 @@ export default function SurveyForm({ onSubmitSuccess }) {
     selectedCareers: [],
     joiningTimeline: '',
     trainingMode: '',
-    preferredTrainingCity: '',
+    preferredTrainingCity: 'Nagamangala, Karnataka',
     seriousnessScore: 3,
     selectedTrainingTopics: [],
     biggestChallenge: '',
@@ -177,6 +178,9 @@ export default function SurveyForm({ onSubmitSuccess }) {
       const { data, error } = await supabase.from('aviation_leads').insert([payload]);
 
       if (error) throw error;
+
+      // Dispatch automated thank-you and admin notification emails in background
+      sendEmails(payload).catch(err => console.error('Email dispatch failed:', err));
 
       // Celebrate & trigger success view
       if (typeof window !== 'undefined') {
@@ -630,7 +634,7 @@ export default function SurveyForm({ onSubmitSuccess }) {
               {/* Preferred training city */}
               <div>
                 <label className="block text-xs font-semibold text-slate-300 uppercase tracking-wider mb-2">
-                  Preferred Training City <span className="text-gold-main">*</span>
+                  Training Location <span className="text-gold-main">*</span>
                 </label>
                 <div className="relative">
                   <span className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-500">
@@ -640,12 +644,13 @@ export default function SurveyForm({ onSubmitSuccess }) {
                     type="text"
                     name="preferredTrainingCity"
                     value={formData.preferredTrainingCity}
-                    onChange={handleTextChange}
-                    placeholder="Example: Bangalore, Hyderabad, Chennai, Mumbai, Delhi"
-                    className={`w-full pl-10 pr-4 py-3 bg-navy-dark/40 border ${errors.preferredTrainingCity ? 'border-red-500' : 'border-white/10'} rounded-xl text-white placeholder-slate-500 focus:outline-none focus:border-gold-main transition-colors text-sm`}
+                    readOnly
+                    className="w-full pl-10 pr-4 py-3 bg-navy-dark/60 border border-gold-main/30 rounded-xl text-slate-300 font-semibold cursor-not-allowed text-sm"
                   />
                 </div>
-                {errors.preferredTrainingCity && <p className="text-red-500 text-xs mt-1.5 flex items-center gap-1"><AlertCircle className="w-3.5 h-3.5" />{errors.preferredTrainingCity}</p>}
+                <p className="text-slate-400 text-[10px] mt-1.5 leading-relaxed">
+                  Note: Keerz Academy training is hosted exclusively at our Nagamangala campus in Karnataka.
+                </p>
               </div>
 
             </div>

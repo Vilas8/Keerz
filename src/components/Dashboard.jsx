@@ -6,7 +6,7 @@ import {
 } from 'recharts';
 import { 
   Users, Star, MapPin, TrendingUp, Plane, RefreshCw, 
-  AlertCircle, GraduationCap, Calendar, Laptop, Clock 
+  AlertCircle, GraduationCap, Calendar, Laptop, Clock, X 
 } from 'lucide-react';
 
 const COLORS = ['#D4AF37', '#0EA5E9', '#079992', '#535C91', '#E11D48', '#10B981', '#F59E0B', '#8B5CF6'];
@@ -16,6 +16,14 @@ export default function Dashboard() {
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState('');
+
+  // Admin record viewer states
+  const [viewMode, setViewMode] = useState('charts'); // 'charts' or 'leads'
+  const [searchQuery, setSearchQuery] = useState('');
+  const [filterState, setFilterState] = useState('');
+  const [filterScore, setFilterScore] = useState('');
+  const [currentPage, setCurrentPage] = useState(1);
+  const [selectedLeadProfile, setSelectedLeadProfile] = useState(null);
 
   const fetchDashboardData = async () => {
     try {
@@ -171,7 +179,23 @@ export default function Dashboard() {
           </p>
         </div>
 
-        <div className="flex items-center gap-3">
+        <div className="flex flex-wrap items-center gap-3">
+          {/* View Toggle */}
+          <div className="flex items-center bg-navy-dark/80 p-1 rounded-xl border border-white/10 shrink-0">
+            <button
+              onClick={() => setViewMode('charts')}
+              className={`px-4 py-1.5 rounded-lg text-xs font-semibold transition-all cursor-pointer ${viewMode === 'charts' ? 'bg-gold-main text-navy-dark shadow-md' : 'text-slate-400 hover:text-white'}`}
+            >
+              Analytics Charts
+            </button>
+            <button
+              onClick={() => setViewMode('leads')}
+              className={`px-4 py-1.5 rounded-lg text-xs font-semibold transition-all cursor-pointer ${viewMode === 'leads' ? 'bg-gold-main text-navy-dark shadow-md' : 'text-slate-400 hover:text-white'}`}
+            >
+              Candidate Records
+            </button>
+          </div>
+
           {isSupabaseMock && (
             <span className="px-3 py-1 rounded bg-gold-main/10 border border-gold-main/30 text-gold-main text-[10px] font-mono uppercase tracking-wider">
               Preview Mode (Demo Seed Data)
@@ -278,7 +302,7 @@ export default function Dashboard() {
           <h4 className="text-white font-bold text-lg mb-1">No Leads Registered Yet</h4>
           <p className="text-sm font-light">Submissions to the interest form will automatically update this feasibility panel.</p>
         </div>
-      ) : (
+      ) : viewMode === 'charts' ? (
         <div className="space-y-8">
           
           {/* Row 1 Charts: Geography & Joining Timeline */}
@@ -480,6 +504,361 @@ export default function Dashboard() {
 
           </div>
 
+        </div>
+      ) : (
+        <div className="space-y-6 animate-fade-in text-left">
+          
+          {/* Controls Bar */}
+          <div className="glass-panel p-5 rounded-2xl border border-white/5 shadow-md flex flex-col md:flex-row md:items-center justify-between gap-4">
+            
+            {/* Search and Filters */}
+            <div className="flex flex-wrap items-center gap-3 w-full md:w-auto">
+              {/* Search Box */}
+              <div className="relative w-full sm:w-64">
+                <input
+                  type="text"
+                  value={searchQuery}
+                  onChange={(e) => {
+                    setSearchQuery(e.target.value);
+                    setCurrentPage(1);
+                  }}
+                  placeholder="Search name, city, state..."
+                  className="w-full pl-4 pr-10 py-2.5 bg-navy-dark/60 border border-white/10 rounded-xl text-white placeholder-slate-500 focus:outline-none focus:border-gold-main text-xs"
+                />
+              </div>
+
+              {/* State Filter */}
+              <select
+                value={filterState}
+                onChange={(e) => {
+                  setFilterState(e.target.value);
+                  setCurrentPage(1);
+                }}
+                className="bg-navy-dark/60 border border-white/10 rounded-xl px-3 py-2.5 text-xs text-slate-300 focus:outline-none focus:border-gold-main"
+              >
+                <option value="">All States</option>
+                {Array.from(new Set(safeLeads.map(l => l?.state).filter(Boolean))).sort().map(st => (
+                  <option key={st} value={st}>{st}</option>
+                ))}
+              </select>
+
+              {/* Seriousness Filter */}
+              <select
+                value={filterScore}
+                onChange={(e) => {
+                  setFilterScore(e.target.value);
+                  setCurrentPage(1);
+                }}
+                className="bg-navy-dark/60 border border-white/10 rounded-xl px-3 py-2.5 text-xs text-slate-300 focus:outline-none focus:border-gold-main"
+              >
+                <option value="">All Scores</option>
+                {[5, 4, 3, 2, 1].map(sc => (
+                  <option key={sc} value={sc}>Score {sc}.0</option>
+                ))}
+              </select>
+            </div>
+
+            {/* Export CSV Button */}
+            <button
+              onClick={() => {
+                const headers = [
+                  'Name', 'Email', 'Mobile', 'WhatsApp', 'Age Group', 'Qualification', 
+                  'State', 'City', 'Preferred Training City', 'Timeline', 'Training Mode', 
+                  'Seriousness Score', 'Careers of Interest', 'Topics of Interest', 
+                  'Biggest Challenge', 'Consent Granted', 'Submitted At'
+                ];
+                
+                const rows = safeLeads.map(l => [
+                  l.full_name || '',
+                  l.email || '',
+                  l.mobile || '',
+                  l.whatsapp || '',
+                  l.age_group || '',
+                  l.qualification || '',
+                  l.state || '',
+                  l.city || '',
+                  l.preferred_training_city || '',
+                  l.joining_timeline || '',
+                  l.training_mode || '',
+                  l.seriousness_score || '',
+                  Array.isArray(l.selected_careers) ? l.selected_careers.join('; ') : (l.selected_careers || ''),
+                  Array.isArray(l.selected_training_topics) ? l.selected_training_topics.join('; ') : (l.selected_training_topics || ''),
+                  (l.biggest_challenge || '').replace(/\r?\n|\r/g, ' '),
+                  l.consent ? 'Yes' : 'No',
+                  new Date(l.created_at || Date.now()).toLocaleString('en-IN')
+                ]);
+                
+                const csvString = [headers.join(','), ...rows.map(e => e.map(val => `"${String(val).replace(/"/g, '""')}"`).join(','))].join('\n');
+                const blob = new Blob([csvString], { type: 'text/csv;charset=utf-8;' });
+                const url = URL.createObjectURL(blob);
+                const link = document.createElement('a');
+                link.href = url;
+                link.setAttribute('download', `Keerz_Academy_Leads_${new Date().toISOString().split('T')[0]}.csv`);
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+                URL.revokeObjectURL(url);
+              }}
+              className="flex items-center justify-center gap-2 px-4 py-2 bg-gradient-to-r from-gold-main to-gold-light text-navy-dark font-bold rounded-xl text-xs hover:from-gold-light hover:to-white transition-all shadow-md cursor-pointer"
+            >
+              Export CSV List
+            </button>
+
+          </div>
+
+          {/* Leads Table Container */}
+          <div className="glass-panel rounded-2xl border border-white/5 shadow-md overflow-hidden">
+            <div className="overflow-x-auto">
+              <table className="w-full text-left border-collapse">
+                <thead>
+                  <tr className="border-b border-white/10 bg-navy-dark/40 text-[10px] sm:text-xs font-bold uppercase tracking-wider text-slate-400">
+                    <th className="p-4 sm:p-5">Name</th>
+                    <th className="p-4 sm:p-5">Contact Details</th>
+                    <th className="p-4 sm:p-5">Location</th>
+                    <th className="p-4 sm:p-5">Preferences</th>
+                    <th className="p-4 sm:p-5 text-center">Commitment</th>
+                    <th className="p-4 sm:p-5">Submitted Date</th>
+                    <th className="p-4 sm:p-5 text-right">Actions</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-white/5 text-xs sm:text-sm text-slate-300">
+                  {(() => {
+                    const filtered = safeLeads.filter(l => {
+                      if (!l) return false;
+                      const query = searchQuery.toLowerCase().trim();
+                      const matchesSearch = 
+                        !query ||
+                        (l.full_name && l.full_name.toLowerCase().includes(query)) ||
+                        (l.email && l.email.toLowerCase().includes(query)) ||
+                        (l.mobile && l.mobile.includes(query)) ||
+                        (l.state && l.state.toLowerCase().includes(query)) ||
+                        (l.city && l.city.toLowerCase().includes(query));
+                      
+                      const matchesState = !filterState || l.state === filterState;
+                      const matchesScore = !filterScore || String(l.seriousness_score) === filterScore;
+                      
+                      return matchesSearch && matchesState && matchesScore;
+                    });
+
+                    const itemsPerPage = 10;
+                    const totalPages = Math.ceil(filtered.length / itemsPerPage) || 1;
+                    const startIndex = (currentPage - 1) * itemsPerPage;
+                    const paginated = filtered.slice(startIndex, startIndex + itemsPerPage);
+
+                    if (filtered.length === 0) {
+                      return (
+                        <tr>
+                          <td colSpan="7" className="p-10 text-center text-slate-500 font-light">
+                            No candidate records found matching current search/filters.
+                          </td>
+                        </tr>
+                      );
+                    }
+
+                    return (
+                      <>
+                        {paginated.map((l) => (
+                          <tr key={l.id} className="hover:bg-white/5 transition-colors">
+                            <td className="p-4 sm:p-5 font-bold text-white max-w-[12rem] truncate">
+                              {l.full_name}
+                            </td>
+                            <td className="p-4 sm:p-5 font-light leading-relaxed">
+                              <span className="block">{l.email}</span>
+                              <span className="block text-slate-500 text-xs">{l.mobile}</span>
+                            </td>
+                            <td className="p-4 sm:p-5">
+                              <span className="block font-semibold">{l.city}</span>
+                              <span className="block text-slate-500 text-xs">{l.state}</span>
+                            </td>
+                            <td className="p-4 sm:p-5 text-xs">
+                              <span className="block text-slate-400 font-semibold">{l.joining_timeline}</span>
+                              <span className="block text-slate-500">{l.training_mode} Mode</span>
+                            </td>
+                            <td className="p-4 sm:p-5 text-center">
+                              <span className={`inline-block px-2.5 py-0.5 rounded font-bold font-mono text-[10px] ${
+                                l.seriousness_score >= 4 
+                                  ? 'bg-emerald-500/15 border border-emerald-500/30 text-emerald-400' 
+                                  : l.seriousness_score === 3 
+                                    ? 'bg-gold-main/15 border border-gold-main/30 text-gold-main' 
+                                    : 'bg-rose-500/15 border border-rose-500/30 text-rose-400'
+                              }`}>
+                                {l.seriousness_score}.0 / 5.0
+                              </span>
+                            </td>
+                            <td className="p-4 sm:p-5 text-xs text-slate-500">
+                              {new Date(l.created_at).toLocaleDateString('en-IN')}
+                            </td>
+                            <td className="p-4 sm:p-5 text-right">
+                              <button
+                                onClick={() => setSelectedLeadProfile(l)}
+                                className="px-3 py-1 bg-navy-medium border border-white/10 hover:border-gold-main/40 text-slate-200 hover:text-white rounded-lg text-xs font-semibold cursor-pointer transition-colors"
+                              >
+                                View Details
+                              </button>
+                            </td>
+                          </tr>
+                        ))}
+                        
+                        {/* Table Footer / Pagination controls */}
+                        {totalPages > 1 && (
+                          <tr>
+                            <td colSpan="7" className="p-4 sm:p-5 bg-navy-dark/20">
+                              <div className="flex items-center justify-between">
+                                <span className="text-xs text-slate-500 font-light">
+                                  Showing {startIndex + 1} - {Math.min(startIndex + itemsPerPage, filtered.length)} of {filtered.length} Leads
+                                </span>
+                                <div className="flex items-center gap-2">
+                                  <button
+                                    onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
+                                    disabled={currentPage === 1}
+                                    className="px-2.5 py-1 bg-navy-medium text-slate-400 hover:text-white disabled:opacity-30 rounded text-xs cursor-pointer border border-white/5"
+                                  >
+                                    Previous
+                                  </button>
+                                  <span className="text-xs font-mono font-bold text-slate-300">
+                                    {currentPage} / {totalPages}
+                                  </span>
+                                  <button
+                                    onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
+                                    disabled={currentPage === totalPages}
+                                    className="px-2.5 py-1 bg-navy-medium text-slate-400 hover:text-white disabled:opacity-30 rounded text-xs cursor-pointer border border-white/5"
+                                  >
+                                    Next
+                                  </button>
+                                </div>
+                              </div>
+                            </td>
+                          </tr>
+                        )}
+                      </>
+                    );
+                  })()}
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+        </div>
+      )}
+
+      {/* DETAIL MODAL OVERLAY */}
+      {selectedLeadProfile && (
+        <div className="fixed inset-0 z-50 bg-navy-dark/85 backdrop-blur-md flex items-center justify-center p-4">
+          <div className="relative max-w-2xl w-full bg-slate-900 border border-gold-main/30 rounded-3xl overflow-hidden shadow-2xl p-6 sm:p-8 space-y-6">
+            
+            {/* Modal Header */}
+            <div className="flex items-center justify-between border-b border-white/10 pb-4">
+              <div>
+                <span className="text-[10px] font-mono tracking-widest text-gold-main font-bold uppercase block text-left">
+                  Lead Profile Details
+                </span>
+                <h3 className="font-display text-lg sm:text-xl font-extrabold text-white mt-1 text-left">
+                  {selectedLeadProfile.full_name}
+                </h3>
+              </div>
+              <button
+                onClick={() => setSelectedLeadProfile(null)}
+                className="text-slate-400 hover:text-white p-1.5 rounded-full hover:bg-white/5 transition-colors cursor-pointer"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            {/* Profile Fields Details */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-4 text-left text-sm max-h-[60vh] overflow-y-auto pr-2">
+              
+              <div>
+                <span className="block text-[10px] uppercase font-bold tracking-wide text-slate-500">Email Address</span>
+                <span className="text-white break-all font-light">{selectedLeadProfile.email}</span>
+              </div>
+
+              <div>
+                <span className="block text-[10px] uppercase font-bold tracking-wide text-slate-500">Contact Numbers</span>
+                <span className="text-white block font-light">Mobile: {selectedLeadProfile.mobile}</span>
+                {selectedLeadProfile.whatsapp && (
+                  <span className="text-slate-400 text-xs block font-light">WhatsApp: {selectedLeadProfile.whatsapp}</span>
+                )}
+              </div>
+
+              <div>
+                <span className="block text-[10px] uppercase font-bold tracking-wide text-slate-500">Location Details</span>
+                <span className="text-white block font-semibold">{selectedLeadProfile.city}, {selectedLeadProfile.state}</span>
+                <span className="text-slate-500 text-xs block">Training Campus: {selectedLeadProfile.preferred_training_city}</span>
+              </div>
+
+              <div>
+                <span className="block text-[10px] uppercase font-bold tracking-wide text-slate-500">Age & Qualification</span>
+                <span className="text-white block font-light">Age: {selectedLeadProfile.age_group} Years</span>
+                <span className="text-slate-400 text-xs block">Qual: {selectedLeadProfile.qualification}</span>
+              </div>
+
+              <div>
+                <span className="block text-[10px] uppercase font-bold tracking-wide text-slate-500">Timeline & Mode</span>
+                <span className="text-white block font-light">Timeline: {selectedLeadProfile.joining_timeline}</span>
+                <span className="text-slate-400 text-xs block">Mode: {selectedLeadProfile.training_mode} Mode</span>
+              </div>
+
+              <div>
+                <span className="block text-[10px] uppercase font-bold tracking-wide text-slate-500">Commitment Score</span>
+                <span className="text-gold-main font-bold block">{selectedLeadProfile.seriousness_score}.0 / 5.0</span>
+                <span className="text-slate-500 text-xs block">Career Interest: {selectedLeadProfile.career_interest}</span>
+              </div>
+
+              <div className="sm:col-span-2">
+                <span className="block text-[10px] uppercase font-bold tracking-wide text-slate-500 mb-1">Careers of Interest</span>
+                <div className="flex flex-wrap gap-1.5 mt-1">
+                  {(Array.isArray(selectedLeadProfile.selected_careers) 
+                    ? selectedLeadProfile.selected_careers 
+                    : String(selectedLeadProfile.selected_careers).split(',')
+                  ).map((c, i) => (
+                    <span key={i} className="px-2 py-0.5 bg-sky-main/15 border border-sky-main/30 text-sky-light text-[10px] font-semibold rounded">
+                      {c.trim()}
+                    </span>
+                  ))}
+                </div>
+              </div>
+
+              <div className="sm:col-span-2">
+                <span className="block text-[10px] uppercase font-bold tracking-wide text-slate-500 mb-1">Requested Training Topics</span>
+                <div className="flex flex-wrap gap-1.5 mt-1">
+                  {(Array.isArray(selectedLeadProfile.selected_training_topics) 
+                    ? selectedLeadProfile.selected_training_topics 
+                    : String(selectedLeadProfile.selected_training_topics).startsWith('{')
+                      ? String(selectedLeadProfile.selected_training_topics).slice(1,-1).split(',')
+                      : String(selectedLeadProfile.selected_training_topics).split(',')
+                  ).map((t, i) => (
+                    <span key={i} className="px-2 py-0.5 bg-gold-main/15 border border-gold-main/30 text-gold-main text-[10px] font-medium rounded">
+                      {t.trim().replace(/^"|"$/g, '')}
+                    </span>
+                  ))}
+                </div>
+              </div>
+
+              <div className="sm:col-span-2">
+                <span className="block text-[10px] uppercase font-bold tracking-wide text-slate-500">Biggest Challenge</span>
+                <p className="text-slate-300 font-light text-xs mt-1 bg-navy-dark/40 p-3 rounded-lg border border-white/5 leading-relaxed">
+                  {selectedLeadProfile.biggest_challenge || 'No challenge shared.'}
+                </p>
+              </div>
+
+              <div className="sm:col-span-2 text-slate-500 text-[10px] font-mono leading-relaxed pt-2 border-t border-white/5 flex justify-between">
+                <span>Consent Granted: {selectedLeadProfile.consent ? 'Yes' : 'No'}</span>
+                <span>Submitted At: {new Date(selectedLeadProfile.created_at).toLocaleString('en-IN')}</span>
+              </div>
+
+            </div>
+
+            {/* Modal Close Button */}
+            <div className="flex justify-end pt-2 border-t border-white/5">
+              <button
+                onClick={() => setSelectedLeadProfile(null)}
+                className="px-6 py-2 rounded-xl bg-navy-medium border border-white/10 hover:border-white/20 text-slate-200 hover:text-white text-xs sm:text-sm font-semibold cursor-pointer transition-colors"
+              >
+                Close Profile
+              </button>
+            </div>
+
+          </div>
         </div>
       )}
 

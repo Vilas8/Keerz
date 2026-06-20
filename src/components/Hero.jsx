@@ -82,9 +82,9 @@ export default function Hero({ onCtaClick }) {
           transition={{ duration: 0.8, delay: 0.25 }}
           className="text-base sm:text-lg md:text-xl text-slate-300 max-w-3xl mx-auto font-light leading-relaxed mb-8 md:mb-12 px-2"
         >
-          We are planning a specialized Cabin Crew & Aviation Career Training Program for aspiring women across India. 
+          We are planning a specialized Cabin Crew & Aviation Career Training Program. 
           Help us understand your interest by completing this short survey. Your feedback will help us launch training programs 
-          in the cities where aspiring aviation professionals need them the most.
+          matching your career goals.
         </motion.p>
 
         {/* CTA Area */}
@@ -104,7 +104,7 @@ export default function Hero({ onCtaClick }) {
           
           <div className="flex items-center gap-2 text-xs sm:text-sm text-slate-400 font-medium py-2">
             <MapPin className="w-4 h-4 text-sky-light" />
-            <span>Targeting 15+ Cities Across India</span>
+            <span>Exclusively in Nagamangala, Karnataka</span>
           </div>
         </motion.div>
 
@@ -116,7 +116,7 @@ export default function Hero({ onCtaClick }) {
           className="mt-16 md:mt-24 grid grid-cols-2 md:grid-cols-4 gap-4 max-w-4xl mx-auto"
         >
           {[
-            { label: 'Primary Target', value: 'Women (18-27)' },
+            { label: 'Primary Target', value: 'Ages 18-27 (Male/Female)' },
             { label: 'Qualification', value: 'Min 12th Pass' },
             { label: 'Focus Areas', value: 'Grooming & Posture' },
             { label: 'Syllabus Focus', value: 'Interview Prep' }

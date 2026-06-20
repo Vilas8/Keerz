@@ -95,7 +95,7 @@ const seedDemoData = () => {
           selected_careers: selectedCareersList,
           joining_timeline: timelines[Math.floor(Math.random() * timelines.length)],
           training_mode: trainingModes[Math.floor(Math.random() * trainingModes.length)],
-          preferred_training_city: city,
+          preferred_training_city: 'Nagamangala, Karnataka',
           seriousness_score: seriousness,
           selected_training_topics: selectedTopics,
           biggest_challenge: Math.random() > 0.3 ? ['Lack of confidence', 'Communication skills', 'Financial concerns', 'Lack of guidance', 'Interview preparation'][Math.floor(Math.random() * 5)] : '',
