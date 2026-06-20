@@ -1,0 +1,130 @@
+@import "tailwindcss";
+
+@theme {
+  --color-navy-dark: #070F2B;
+  --color-navy-medium: #1B1A55;
+  --color-navy-light: #535C91;
+  --color-sky-main: #079992;
+  --color-sky-light: #00cec9;
+  --color-gold-main: #D4AF37;
+  --color-gold-dark: #AA7C11;
+  --color-gold-light: #F3E5AB;
+  
+  --font-display: 'Outfit', system-ui, -apple-system, sans-serif;
+  --font-sans: 'Inter', system-ui, -apple-system, sans-serif;
+
+  --animate-float: float 6s ease-in-out infinite;
+  --animate-pulse-gold: pulse-gold 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+  --animate-takeoff: takeoff 1.5s cubic-bezier(0.25, 1, 0.5, 1) forwards;
+
+  @keyframes float {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-10px); }
+  }
+  @keyframes pulse-gold {
+    0%, 100% { opacity: 1; transform: scale(1); }
+    50% { opacity: .7; transform: scale(1.02); }
+  }
+  @keyframes takeoff {
+    0% { transform: translate(0, 0) scale(1) rotate(0deg); opacity: 1; filter: blur(0); }
+    40% { transform: translate(120px, -80px) scale(0.7) rotate(-15deg); opacity: 0.9; filter: blur(0.5px); }
+    100% { transform: translate(400px, -250px) scale(0.2) rotate(-35deg); opacity: 0; filter: blur(2px); }
+  }
+}
+
+/* Custom background animations and global layout overrides */
+body {
+  font-family: var(--font-sans);
+  background-color: #070F2B;
+  color: #f8fafc;
+  overflow-x: hidden;
+}
+
+#root {
+  display: block;
+  width: 100%;
+  margin: 0;
+  border: none;
+  min-height: 100vh;
+  text-align: left;
+}
+
+/* Custom scrollbars */
+::-webkit-scrollbar {
+  width: 8px;
+}
+::-webkit-scrollbar-track {
+  background: #070F2B;
+}
+::-webkit-scrollbar-thumb {
+  background: #1B1A55;
+  border-radius: 4px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #535C91;
+}
+
+/* Perforated lines for the boarding pass */
+.perforation-line {
+  background-image: radial-gradient(circle, #070F2B 4px, transparent 5px);
+  background-size: 16px 100%;
+  background-repeat: repeat-x;
+  height: 8px;
+  width: 100%;
+}
+
+.perforation-line-v {
+  background-image: radial-gradient(circle, #070F2B 4px, transparent 5px);
+  background-size: 100% 16px;
+  background-repeat: repeat-y;
+  width: 8px;
+  height: 100%;
+}
+
+/* Glassmorphism helpers */
+.glass-panel {
+  background: rgba(27, 26, 85, 0.35);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.glass-panel-light {
+  background: rgba(255, 255, 255, 0.05);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+/* Boarding pass ticket edges */
+.ticket-left-cutout {
+  position: relative;
+}
+.ticket-left-cutout::before {
+  content: '';
+  position: absolute;
+  left: -12px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  background-color: #070F2B;
+  box-shadow: inset -3px 0 3px rgba(0, 0, 0, 0.2);
+}
+
+.ticket-right-cutout {
+  position: relative;
+}
+.ticket-right-cutout::before {
+  content: '';
+  position: absolute;
+  right: -12px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  background-color: #070F2B;
+  box-shadow: inset 3px 0 3px rgba(0, 0, 0, 0.2);
+}
