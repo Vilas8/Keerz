@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef, Children, isValidElement, cloneElement } from 'react';
 import { supabase, isSupabaseMock } from '../utils/supabaseClient';
 import { 
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, 
@@ -6,10 +6,10 @@ import {
 } from 'recharts';
 
 function CustomResponsiveContainer({ children, height = 300 }) {
-  const containerRef = React.useRef(null);
-  const [width, setWidth] = React.useState(0);
+  const containerRef = useRef(null);
+  const [width, setWidth] = useState(0);
 
-  React.useEffect(() => {
+  useEffect(() => {
     if (!containerRef.current) return;
     
     setWidth(containerRef.current.getBoundingClientRect().width || 300);
@@ -24,9 +24,9 @@ function CustomResponsiveContainer({ children, height = 300 }) {
     return () => observer.disconnect();
   }, []);
 
-  const renderedChildren = React.Children.map(children, (child) => {
-    if (React.isValidElement(child)) {
-      return React.cloneElement(child, {
+  const renderedChildren = Children.map(children, (child) => {
+    if (isValidElement(child)) {
+      return cloneElement(child, {
         width: width,
         height: height
       });

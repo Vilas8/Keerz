@@ -170,12 +170,7 @@ if (supabaseUrl && supabaseAnonKey && supabaseUrl !== 'YOUR_SUPABASE_URL') {
                 return 0;
               });
               
-              const innerChain = {
-                then: (onfulfilled) => {
-                  return Promise.resolve({ data: sorted, error: null }).then(onfulfilled);
-                }
-              };
-              return innerChain;
+              return Promise.resolve({ data: sorted, error: null });
             },
             then: (onfulfilled) => {
               return Promise.resolve({ data, error: null }).then(onfulfilled);
