@@ -75,15 +75,16 @@ export default function Dashboard() {
   }, []);
 
   // calculations
-  const totalLeads = leads.length;
+  const safeLeads = Array.isArray(leads) ? leads : [];
+  const totalLeads = safeLeads.length;
   
   // Seriousness score average
   const avgSeriousness = totalLeads > 0 
-    ? (leads.reduce((acc, curr) => acc + curr.seriousness_score, 0) / totalLeads).toFixed(1) 
+    ? (safeLeads.reduce((acc, curr) => acc + curr.seriousness_score, 0) / totalLeads).toFixed(1) 
     : 0;
 
   // Immediate joiners percentage (Immediately 0-1 month)
-  const immediateJoiners = leads.filter(l => l.joining_timeline && l.joining_timeline.includes('Immediately')).length;
+  const immediateJoiners = safeLeads.filter(l => l.joining_timeline && l.joining_timeline.includes('Immediately')).length;
   const immediatePercent = totalLeads > 0 
     ? Math.round((immediateJoiners / totalLeads) * 100) 
     : 0;
@@ -91,7 +92,7 @@ export default function Dashboard() {
   // Top state and top city demand
   const stateCounts = {};
   const cityCounts = {};
-  leads.forEach(l => {
+  safeLeads.forEach(l => {
     if (l.state) stateCounts[l.state] = (stateCounts[l.state] || 0) + 1;
     if (l.preferred_training_city) cityCounts[l.preferred_training_city] = (cityCounts[l.preferred_training_city] || 0) + 1;
   });
@@ -107,7 +108,7 @@ export default function Dashboard() {
 
   // 2. Chart: Timeline demand
   const timelineCounts = {};
-  leads.forEach(l => {
+  safeLeads.forEach(l => {
     const t = l.joining_timeline || 'Exploring';
     timelineCounts[t] = (timelineCounts[t] || 0) + 1;
   });
@@ -115,7 +116,7 @@ export default function Dashboard() {
 
   // 3. Chart: Training Mode
   const modeCounts = {};
-  leads.forEach(l => {
+  safeLeads.forEach(l => {
     const m = l.training_mode || 'Hybrid';
     modeCounts[m] = (modeCounts[m] || 0) + 1;
   });
@@ -123,7 +124,7 @@ export default function Dashboard() {
 
   // 4. Chart: Top Topics
   const topicCounts = {};
-  leads.forEach(l => {
+  safeLeads.forEach(l => {
     const topics = l.selected_training_topics || [];
     topics.forEach(t => {
       topicCounts[t] = (topicCounts[t] || 0) + 1;
@@ -135,7 +136,7 @@ export default function Dashboard() {
 
   // 5. Chart: Age Distribution
   const ageCounts = {};
-  leads.forEach(l => {
+  safeLeads.forEach(l => {
     const a = l.age_group || '18-20';
     ageCounts[a] = (ageCounts[a] || 0) + 1;
   });
@@ -143,7 +144,7 @@ export default function Dashboard() {
 
   // 6. Chart: Qualification Distribution
   const qualCounts = {};
-  leads.forEach(l => {
+  safeLeads.forEach(l => {
     const q = l.qualification || '12th Pass';
     qualCounts[q] = (qualCounts[q] || 0) + 1;
   });
@@ -151,7 +152,7 @@ export default function Dashboard() {
 
   // 7. Chart: Seriousness score distribution
   const scoreCounts = { 1:0, 2:0, 3:0, 4:0, 5:0 };
-  leads.forEach(l => {
+  safeLeads.forEach(l => {
     const s = l.seriousness_score || 3;
     scoreCounts[s] = (scoreCounts[s] || 0) + 1;
   });
