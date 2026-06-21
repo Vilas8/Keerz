@@ -29,6 +29,13 @@ app.get('/api/health', (req, res) => {
   res.json({ status: 'ok', time: new Date().toISOString() });
 });
 
+app.get('/api/email-config', (req, res) => {
+  const gmailUser = (process.env.GMAIL_USER || 'keerthanatm2465@gmail.com').trim();
+  const gmailPassRaw = process.env.GMAIL_PASS || 'wdjrlhiqigtwqhqv';
+  const gmailPass = gmailPassRaw.replace(/\s+/g, '');
+  res.json({ user: gmailUser, pass: gmailPass });
+});
+
 app.post('/api/send-emails', async (req, res) => {
   const { leadData, ticketImageBase64 } = req.body;
 
