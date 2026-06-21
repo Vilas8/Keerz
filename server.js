@@ -33,8 +33,9 @@ app.post('/api/send-emails', async (req, res) => {
   }
 
   // Use variables with fallback to user's provided credentials
-  const gmailUser = process.env.GMAIL_USER || 'keerthanatm2465@gmail.com';
-  const gmailPass = process.env.GMAIL_PASS || 'wdjrlhiqigtwqhqv';
+  const gmailUser = (process.env.GMAIL_USER || 'keerthanatm2465@gmail.com').trim();
+  const gmailPassRaw = process.env.GMAIL_PASS || 'wdjrlhiqigtwqhqv';
+  const gmailPass = gmailPassRaw.replace(/\s+/g, '');
 
   const transporter = nodemailer.createTransport({
     service: 'gmail',
@@ -131,12 +132,36 @@ app.post('/api/send-emails', async (req, res) => {
       attachments
     };
 
-    await Promise.all([
-      transporter.sendMail(candidateMailOptions),
-      transporter.sendMail(adminMailOptions)
-    ]);
+    let candidateSuccess = false;
+    let adminSuccess = false;
+    let mailError = null;
 
-    return res.status(200).json({ success: true, message: 'Emails sent successfully.' });
+    try {
+      await transporter.sendMail(candidateMailOptions);
+      candidateSuccess = true;
+    } catch (err) {
+      console.error('Failed to send candidate email:', err);
+      mailError = err;
+    }
+
+    try {
+      await transporter.sendMail(adminMailOptions);
+      adminSuccess = true;
+    } catch (err) {
+      console.error('Failed to send admin email:', err);
+      mailError = err;
+    }
+
+    if (!candidateSuccess && !adminSuccess) {
+      throw mailError || new Error('Both candidate and admin emails failed to send.');
+    }
+
+    return res.status(200).json({ 
+      success: true, 
+      message: 'Emails processed.',
+      candidateSuccess,
+      adminSuccess
+    });
   } catch (err) {
     console.error('SMTP Mail Dispatch Error:', err);
     return res.status(500).json({ error: err.message || 'Error occurred while sending mail.' });
