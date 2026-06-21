@@ -73,7 +73,31 @@ export default function SuccessPopup({ leadData, onClose }) {
   }, []);
 
   useEffect(() => {
-    // Pre-generate the ticket image after the component renders and fonts are settled
+    // Dispatch automated candidate and admin emails immediately on mount
+    setEmailSent((prev) => {
+      if (!prev) {
+        setEmailStatus('sending');
+        sendEmails(leadData)
+          .then((res) => {
+            if (res.success) {
+              setEmailStatus('sent');
+            } else {
+              setEmailStatus('failed');
+              setEmailErrorMsg(res.error || 'Server SMTP dispatch error.');
+            }
+          })
+          .catch((err) => {
+            setEmailStatus('failed');
+            setEmailErrorMsg(err.message || 'Network error sending emails.');
+          });
+        return true;
+      }
+      return prev;
+    });
+  }, [leadData]);
+
+  useEffect(() => {
+    // Pre-generate the ticket image in the background for instant download/share
     const generateTicket = async () => {
       const ticketElement = document.getElementById('printable-boarding-ticket');
       if (!ticketElement) return;
@@ -93,38 +117,13 @@ export default function SuccessPopup({ leadData, onClose }) {
             setTicketBlob(blob);
           }
         }, 'image/png');
-
-        setEmailStatus('sending');
-
-        // Dispatch automated candidate and admin emails with the ticket image attached
-        setEmailSent((prev) => {
-          if (!prev) {
-            sendEmails(leadData, dataUrl)
-              .then((res) => {
-                if (res.success) {
-                  setEmailStatus('sent');
-                } else {
-                  setEmailStatus('failed');
-                  setEmailErrorMsg(res.error || 'Server SMTP dispatch error.');
-                }
-              })
-              .catch((err) => {
-                setEmailStatus('failed');
-                setEmailErrorMsg(err.message || 'Network error sending emails.');
-              });
-            return true;
-          }
-          return prev;
-        });
       } catch (err) {
-        setEmailStatus('failed');
-        setEmailErrorMsg('Failed to render ticket image.');
-        console.error('Failed to pre-generate ticket image:', err);
+        console.error('Failed to pre-generate ticket image in background:', err);
       }
     };
 
     generateTicket();
-  }, [leadData]);
+  }, []);
 
   if (!leadData) return null;
 

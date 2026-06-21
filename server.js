@@ -29,15 +29,8 @@ app.get('/api/health', (req, res) => {
   res.json({ status: 'ok', time: new Date().toISOString() });
 });
 
-app.get('/api/email-config', (req, res) => {
-  const gmailUser = (process.env.GMAIL_USER || 'keerthanatm2465@gmail.com').trim();
-  const gmailPassRaw = process.env.GMAIL_PASS || 'wdjrlhiqigtwqhqv';
-  const gmailPass = gmailPassRaw.replace(/\s+/g, '');
-  res.json({ user: gmailUser, pass: gmailPass });
-});
-
 app.post('/api/send-emails', async (req, res) => {
-  const { leadData, ticketImageBase64 } = req.body;
+  const { leadData } = req.body;
 
   if (!leadData) {
     return res.status(400).json({ error: 'Missing lead data' });
@@ -57,18 +50,7 @@ app.post('/api/send-emails', async (req, res) => {
   });
 
   try {
-    const attachments = [];
-    if (ticketImageBase64) {
-      const cleanBase64 = ticketImageBase64.replace(/^data:image\/png;base64,/, '');
-      attachments.push({
-        filename: `Keerz_Boarding_Pass_${leadData.full_name.replace(/\s+/g, '_')}.png`,
-        content: cleanBase64,
-        encoding: 'base64',
-        cid: 'ticket-image'
-      });
-    }
-
-    // 1. Email for the Candidate (with attached ticket)
+    // 1. Email for the Candidate
     const candidateMailOptions = {
       from: `"Keerz Aviation Academy" <${gmailUser}>`,
       to: leadData.email,
@@ -84,7 +66,7 @@ app.post('/api/send-emails', async (req, res) => {
           
           <p>Thank you for your valuable support in completing our aviation training survey! We are thrilled to connect with aspiring professionals like you.</p>
           
-          <p>We have successfully registered your interest in the future <strong>Keerz Cabin Crew Academy</strong>. Your official <strong>Boarding Survey Pass</strong> is attached to this email for your reference.</p>
+          <p>We have successfully registered your interest in the future <strong>Keerz Cabin Crew Academy</strong>. You can view, print, or download your official <strong>Boarding Survey Pass</strong> directly from the website's success screen.</p>
           
           <div style="background-color: #f8fafc; padding: 20px; border-radius: 12px; border: 1px solid #e2e8f0; margin: 25px 0;">
             <h4 style="margin-top: 0; color: #079992; margin-bottom: 15px; border-bottom: 1px solid #cbd5e1; padding-bottom: 8px;">Registration Details</h4>
@@ -106,11 +88,10 @@ app.post('/api/send-emails', async (req, res) => {
             Contact: keerthanatm2465@gmail.com
           </div>
         </div>
-      `,
-      attachments
+      `
     };
 
-    // 2. Email for Admin (with all response details)
+    // 2. Email for Admin
     const adminMailOptions = {
       from: `"Keerz Alert" <${gmailUser}>`,
       to: 'keerthanatm2465@gmail.com',
@@ -136,11 +117,8 @@ app.post('/api/send-emails', async (req, res) => {
             <tr style="background-color: #f8fafc;"><td style="padding: 10px; font-weight: bold; border-bottom: 1px solid #e2e8f0;">Topics of Interest:</td><td style="padding: 10px; border-bottom: 1px solid #e2e8f0;">${Array.isArray(leadData.selected_training_topics) ? leadData.selected_training_topics.join(', ') : leadData.selected_training_topics}</td></tr>
             <tr><td style="padding: 10px; font-weight: bold; border-bottom: 1px solid #e2e8f0;">Biggest Challenge:</td><td style="padding: 10px; border-bottom: 1px solid #e2e8f0;">${leadData.biggest_challenge || 'None Shared'}</td></tr>
           </table>
-
-          <p style="margin-top: 25px; font-size: 12px; color: #64748b;">The official boarding survey pass has been attached as an image file for your logs.</p>
         </div>
-      `,
-      attachments
+      `
     };
 
     let candidateSuccess = false;
