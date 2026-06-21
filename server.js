@@ -44,15 +44,31 @@ app.post('/api/send-emails', async (req, res) => {
   const smtpPass = smtpPassRaw.replace(/\s+/g, '');
   const smtpFrom = (process.env.SMTP_FROM_EMAIL || smtpUser).trim();
 
-  const transporter = nodemailer.createTransport({
-    host: smtpHost,
-    port: smtpPort,
-    secure: smtpPort === 465,
+  const transportConfig = {
     auth: {
       user: smtpUser,
       pass: smtpPass,
     },
-  });
+    connectionTimeout: 10000, // 10 seconds connection timeout
+    greetingTimeout: 8000,    // 8 seconds greeting timeout
+    socketTimeout: 15000      // 15 seconds socket timeout
+  };
+
+  if (smtpHost.toLowerCase().includes('gmail.com')) {
+    transportConfig.service = 'gmail';
+  } else {
+    transportConfig.host = smtpHost;
+    transportConfig.port = smtpPort;
+    transportConfig.secure = smtpPort === 465;
+    transportConfig.pool = true;
+    transportConfig.maxConnections = 5;
+    transportConfig.maxMessages = 100;
+    transportConfig.tls = {
+      rejectUnauthorized: false
+    };
+  }
+
+  const transporter = nodemailer.createTransport(transportConfig);
 
   try {
     // 1. Email for the Candidate
