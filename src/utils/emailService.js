@@ -9,7 +9,6 @@ export const sendEmails = async (leadData, ticketImageBase64 = null) => {
         leadData,
         ticketImageBase64,
       }),
-      keepalive: true, // Keep connection alive if the popup is closed quickly
     });
 
     if (!response.ok) {
