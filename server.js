@@ -37,22 +37,27 @@ app.post('/api/send-emails', async (req, res) => {
   }
 
   // Use variables with fallback to user's provided credentials
-  const gmailUser = (process.env.GMAIL_USER || 'keerthanatm2465@gmail.com').trim();
-  const gmailPassRaw = process.env.GMAIL_PASS || 'wdjrlhiqigtwqhqv';
-  const gmailPass = gmailPassRaw.replace(/\s+/g, '');
+  const smtpHost = (process.env.SMTP_HOST || 'smtp.gmail.com').trim();
+  const smtpPort = parseInt(process.env.SMTP_PORT || '587');
+  const smtpUser = (process.env.SMTP_USER || process.env.GMAIL_USER || 'keerthanatm2465@gmail.com').trim();
+  const smtpPassRaw = process.env.SMTP_PASS || process.env.GMAIL_PASS || 'wdjrlhiqigtwqhqv';
+  const smtpPass = smtpPassRaw.replace(/\s+/g, '');
+  const smtpFrom = (process.env.SMTP_FROM_EMAIL || smtpUser).trim();
 
   const transporter = nodemailer.createTransport({
-    service: 'gmail',
+    host: smtpHost,
+    port: smtpPort,
+    secure: smtpPort === 465,
     auth: {
-      user: gmailUser,
-      pass: gmailPass,
+      user: smtpUser,
+      pass: smtpPass,
     },
   });
 
   try {
     // 1. Email for the Candidate
     const candidateMailOptions = {
-      from: `"Keerz Aviation Academy" <${gmailUser}>`,
+      from: `"Keerz Aviation Academy" <${smtpFrom}>`,
       to: leadData.email,
       subject: 'Welcome Aboard! - Keerz Aviation Academy',
       html: `
@@ -93,7 +98,7 @@ app.post('/api/send-emails', async (req, res) => {
 
     // 2. Email for Admin
     const adminMailOptions = {
-      from: `"Keerz Alert" <${gmailUser}>`,
+      from: `"Keerz Alert" <${smtpFrom}>`,
       to: 'keerthanatm2465@gmail.com',
       subject: `[Survey Response Alert] - ${leadData.full_name}`,
       html: `
