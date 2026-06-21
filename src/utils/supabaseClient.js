@@ -40,8 +40,8 @@ const seedDemoData = () => {
       ];
 
       const qualifications = ['12th Pass', 'Diploma', 'Graduate', 'Post Graduate'];
-      const careers = ['Cabin Crew', 'Air Hostess', 'Ground Staff', 'Airport Operations', 'Customer Service Executive'];
-      const timelines = ['Immediately (0-1 Month)', 'Within 3 Months', 'Within 6 Months', 'Within 12 Months', 'Just Exploring'];
+      const careers = ['Air Hostess', 'Ground Staff', 'Airport Operations', 'Customer Service Executive'];
+      const timelines = ['Immediately (0-1 Month)', 'Within 3 Months', 'Within 6 Months', 'Just Exploring'];
       const trainingModes = ['Offline', 'Online', 'Hybrid', 'No Preference'];
       const trainingTopics = [
         'Grooming & Presentation', 'Communication Skills', 'Public Speaking', 

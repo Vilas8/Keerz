@@ -526,7 +526,7 @@ export default function SurveyForm({ onSubmitSuccess }) {
                 </label>
                 <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
                   {[
-                    'Cabin Crew', 'Air Hostess', 'Ground Staff', 
+                    'Air Hostess', 'Ground Staff', 
                     'Airport Operations', 'Customer Service Executive', 'Not Sure Yet'
                   ].map(career => {
                     const isChecked = formData.selectedCareers.includes(career);
@@ -575,7 +575,6 @@ export default function SurveyForm({ onSubmitSuccess }) {
                       'Immediately (0-1 Month)', 
                       'Within 3 Months', 
                       'Within 6 Months', 
-                      'Within 12 Months', 
                       'Just Exploring'
                     ].map(timeline => (
                       <label 
