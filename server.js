@@ -25,6 +25,10 @@ app.use((req, res, next) => {
   next();
 });
 
+app.get('/api/health', (req, res) => {
+  res.json({ status: 'ok', time: new Date().toISOString() });
+});
+
 app.post('/api/send-emails', async (req, res) => {
   const { leadData, ticketImageBase64 } = req.body;
 

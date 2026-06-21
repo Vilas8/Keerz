@@ -61,6 +61,8 @@ export default function SuccessPopup({ leadData, onClose }) {
   const [ticketImage, setTicketImage] = useState(null);
   const [ticketBlob, setTicketBlob] = useState(null);
   const [emailSent, setEmailSent] = useState(false);
+  const [emailStatus, setEmailStatus] = useState('generating');
+  const [emailErrorMsg, setEmailErrorMsg] = useState(null);
 
   useEffect(() => {
     // Trigger plane animation shortly after popup loads
@@ -92,17 +94,31 @@ export default function SuccessPopup({ leadData, onClose }) {
           }
         }, 'image/png');
 
+        setEmailStatus('sending');
+
         // Dispatch automated candidate and admin emails with the ticket image attached
         setEmailSent((prev) => {
           if (!prev) {
-            sendEmails(leadData, dataUrl).catch((err) => {
-              console.error('Email dispatch failed:', err);
-            });
+            sendEmails(leadData, dataUrl)
+              .then((res) => {
+                if (res.success) {
+                  setEmailStatus('sent');
+                } else {
+                  setEmailStatus('failed');
+                  setEmailErrorMsg(res.error || 'Server SMTP dispatch error.');
+                }
+              })
+              .catch((err) => {
+                setEmailStatus('failed');
+                setEmailErrorMsg(err.message || 'Network error sending emails.');
+              });
             return true;
           }
           return prev;
         });
       } catch (err) {
+        setEmailStatus('failed');
+        setEmailErrorMsg('Failed to render ticket image.');
         console.error('Failed to pre-generate ticket image:', err);
       }
     };
@@ -266,7 +282,39 @@ export default function SuccessPopup({ leadData, onClose }) {
               <span className="text-[10px] tracking-[0.25em] font-mono text-gold-main font-bold uppercase mb-1">
                 Interest List Confirmed
               </span>
-              
+
+              {/* Email delivery status badge */}
+              <div className={`mt-2 mb-4 px-4 py-1.5 rounded-full text-[11px] font-semibold border flex items-center gap-2 transition-all duration-300 ${
+                emailStatus === 'generating' ? 'bg-amber-500/10 border-amber-500/20 text-amber-400' :
+                emailStatus === 'sending' ? 'bg-sky-500/10 border-sky-500/20 text-sky-400' :
+                emailStatus === 'sent' ? 'bg-emerald-500/10 border-emerald-500/20 text-emerald-400' :
+                'bg-rose-500/10 border-rose-500/20 text-rose-400'
+              }`}>
+                {emailStatus === 'generating' && (
+                  <>
+                    <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                    <span>Generating Ticket Image...</span>
+                  </>
+                )}
+                {emailStatus === 'sending' && (
+                  <>
+                    <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                    <span>Sending Confirmation Emails...</span>
+                  </>
+                )}
+                {emailStatus === 'sent' && (
+                  <>
+                    <CheckCircle2 className="w-3.5 h-3.5" />
+                    <span>Emails Delivered Successfully!</span>
+                  </>
+                )}
+                {emailStatus === 'failed' && (
+                  <span className="text-left text-[10px] leading-tight max-w-md break-all">
+                    Email Failed: {emailErrorMsg || 'Check SMTP Credentials'}
+                  </span>
+                )}
+              </div>
+
               <h3 className="font-display text-2xl sm:text-3xl font-extrabold text-white mb-2">
                 Thank You for Your Feedback!
               </h3>
