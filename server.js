@@ -4,6 +4,9 @@ import { fileURLToPath } from 'url';
 import nodemailer from 'nodemailer';
 import cors from 'cors';
 import dotenv from 'dotenv';
+import dns from 'dns';
+
+dns.setDefaultResultOrder('ipv4first');
 
 dotenv.config();
 
