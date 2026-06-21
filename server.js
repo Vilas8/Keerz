@@ -181,6 +181,75 @@ app.post('/api/send-emails', async (req, res) => {
   }
 });
 
+app.post('/api/send-reply', async (req, res) => {
+  const { email, name, subject, body } = req.body;
+
+  if (!email || !subject || !body) {
+    return res.status(400).json({ error: 'Missing email, subject, or body' });
+  }
+
+  // Use variables with fallback to user's provided credentials
+  const smtpHost = (process.env.SMTP_HOST || 'smtp.gmail.com').trim();
+  const smtpPort = parseInt(process.env.SMTP_PORT || '587');
+  const smtpUser = (process.env.SMTP_USER || process.env.GMAIL_USER || 'keerthanatm2465@gmail.com').trim();
+  const smtpPassRaw = process.env.SMTP_PASS || process.env.GMAIL_PASS || 'wdjrlhiqigtwqhqv';
+  const smtpPass = smtpPassRaw.replace(/\s+/g, '');
+  const smtpFrom = (process.env.SMTP_FROM_EMAIL || smtpUser).trim();
+
+  const transportConfig = {
+    auth: {
+      user: smtpUser,
+      pass: smtpPass,
+    },
+    connectionTimeout: 10000, // 10 seconds connection timeout
+    greetingTimeout: 8000,    // 8 seconds greeting timeout
+    socketTimeout: 15000      // 15 seconds socket timeout
+  };
+
+  if (smtpHost.toLowerCase().includes('gmail.com')) {
+    transportConfig.service = 'gmail';
+  } else {
+    transportConfig.host = smtpHost;
+    transportConfig.port = smtpPort;
+    transportConfig.secure = smtpPort === 465;
+    transportConfig.pool = true;
+    transportConfig.maxConnections = 5;
+    transportConfig.maxMessages = 100;
+    transportConfig.tls = {
+      rejectUnauthorized: false
+    };
+  }
+
+  const transporter = nodemailer.createTransport(transportConfig);
+
+  const mailOptions = {
+    from: `"Keerz Aviation Academy" <${smtpFrom}>`,
+    to: email,
+    subject: subject,
+    html: `
+      <div style="font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; max-width: 600px; margin: 0 auto; padding: 30px; border: 1px solid #e2e8f0; border-radius: 16px; color: #0f172a; background-color: #ffffff;">
+        <div style="text-align: center; margin-bottom: 20px;">
+          <h2 style="color: #079992; margin: 0; font-size: 24px; letter-spacing: 1px;">KEERZ AVIATION ACADEMY</h2>
+        </div>
+        <p>Dear <strong>${name || 'Passenger'}</strong>,</p>
+        <div style="font-size: 14px; line-height: 1.6; color: #334155; white-space: pre-wrap;">${body}</div>
+        <div style="margin-top: 40px; padding-top: 20px; border-top: 1px solid #cbd5e1; font-size: 12px; color: #64748b; text-align: center;">
+          <strong>Keerz Aviation Academy</strong><br/>
+          Contact: keerthanatm2465@gmail.com
+        </div>
+      </div>
+    `
+  };
+
+  try {
+    await transporter.sendMail(mailOptions);
+    return res.status(200).json({ success: true, message: 'Reply sent successfully.' });
+  } catch (err) {
+    console.error('SMTP Reply Dispatch Error:', err);
+    return res.status(500).json({ error: err.message || 'Error occurred while sending reply.' });
+  }
+});
+
 // Serve static assets from Vite build output
 app.use(express.static(path.join(__dirname, 'dist')));
 

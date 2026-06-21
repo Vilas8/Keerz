@@ -11,9 +11,19 @@ const getHtml2CanvasConfig = (ticketElement) => ({
   useCORS: true,
   allowTaint: false,
   logging: false,
+  width: 650,
+  scrollX: 0,
+  scrollY: 0,
+  windowWidth: 1024,
   onclone: (clonedDoc) => {
     const ticketClone = clonedDoc.getElementById('printable-boarding-ticket');
     if (!ticketClone) return;
+
+    // Force a stable desktop dimensions in the cloned document
+    ticketClone.style.width = '650px';
+    ticketClone.style.minWidth = '650px';
+    ticketClone.style.height = 'auto';
+    ticketClone.style.position = 'relative';
 
     const originalSvgs = ticketElement.querySelectorAll('svg');
     const clonedSvgs = ticketClone.querySelectorAll('svg');

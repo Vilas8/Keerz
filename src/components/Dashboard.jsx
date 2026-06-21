@@ -25,6 +25,13 @@ export default function Dashboard() {
   const [currentPage, setCurrentPage] = useState(1);
   const [selectedLeadProfile, setSelectedLeadProfile] = useState(null);
 
+  // States for delete and reply options
+  const [isDeleting, setIsDeleting] = useState(false);
+  const [showReplyForm, setShowReplyForm] = useState(false);
+  const [replySubject, setReplySubject] = useState('');
+  const [replyBody, setReplyBody] = useState('');
+  const [isSendingReply, setIsSendingReply] = useState(false);
+
   const fetchDashboardData = async () => {
     try {
       setRefreshing(true);
@@ -39,6 +46,65 @@ export default function Dashboard() {
     } finally {
       setLoading(false);
       setRefreshing(false);
+    }
+  };
+
+  const handleDeleteLead = async (id) => {
+    if (!window.confirm("Are you sure you want to permanently delete this candidate record?")) {
+      return;
+    }
+    try {
+      setIsDeleting(true);
+      const { error } = await supabase.from('aviation_leads').delete().eq('id', id);
+      if (error) throw error;
+
+      // Update local leads state
+      setLeads(prevLeads => prevLeads.filter(l => l.id !== id));
+      setSelectedLeadProfile(null);
+      alert("Candidate record deleted successfully!");
+    } catch (err) {
+      console.error("Error deleting lead:", err);
+      alert("Failed to delete the lead from the database.");
+    } finally {
+      setIsDeleting(false);
+    }
+  };
+
+  const handleSendReply = async (email, name) => {
+    if (!replySubject.trim() || !replyBody.trim()) {
+      alert("Please fill in both the subject and the message body.");
+      return;
+    }
+
+    try {
+      setIsSendingReply(true);
+      const response = await fetch('/api/send-reply', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          email,
+          name,
+          subject: replySubject,
+          body: replyBody,
+        }),
+      });
+
+      if (!response.ok) {
+        const errData = await response.json().catch(() => ({}));
+        throw new Error(errData.error || `HTTP ${response.status}`);
+      }
+
+      alert("Reply email sent successfully!");
+      setReplySubject('');
+      setReplyBody('');
+      setShowReplyForm(false);
+    } catch (err) {
+      console.error("Error sending reply email:", err);
+      alert(`Failed to send reply email: ${err.message}`);
+    } finally {
+      setIsSendingReply(false);
     }
   };
 
@@ -846,16 +912,85 @@ export default function Dashboard() {
                 <span>Submitted At: {new Date(selectedLeadProfile.created_at).toLocaleString('en-IN')}</span>
               </div>
 
+              {/* Reply Form */}
+              {showReplyForm && (
+                <div className="sm:col-span-2 bg-navy-dark/60 p-4 rounded-xl border border-white/10 space-y-3 mt-2">
+                  <h4 className="text-white font-bold text-xs uppercase tracking-wider">Compose Reply</h4>
+                  
+                  <div className="space-y-1 text-left">
+                    <label className="block text-[10px] text-slate-500 font-bold uppercase">Subject</label>
+                    <input
+                      type="text"
+                      value={replySubject}
+                      onChange={(e) => setReplySubject(e.target.value)}
+                      className="w-full px-3 py-2 bg-slate-900 border border-white/10 rounded-lg text-white text-xs focus:outline-none focus:border-gold-main"
+                    />
+                  </div>
+
+                  <div className="space-y-1 text-left">
+                    <label className="block text-[10px] text-slate-500 font-bold uppercase">Message Body</label>
+                    <textarea
+                      rows={5}
+                      value={replyBody}
+                      onChange={(e) => setReplyBody(e.target.value)}
+                      placeholder="Type your message here..."
+                      className="w-full px-3 py-2 bg-slate-900 border border-white/10 rounded-lg text-white text-xs focus:outline-none focus:border-gold-main"
+                    />
+                  </div>
+
+                  <div className="flex justify-end gap-2 pt-1">
+                    <button
+                      onClick={() => setShowReplyForm(false)}
+                      className="px-3 py-1.5 bg-navy-medium text-slate-400 hover:text-white rounded-lg text-xs font-semibold cursor-pointer transition-all"
+                    >
+                      Cancel
+                    </button>
+                    <button
+                      onClick={() => handleSendReply(selectedLeadProfile.email, selectedLeadProfile.full_name)}
+                      disabled={isSendingReply}
+                      className="px-4 py-1.5 bg-gold-main hover:bg-gold-light text-navy-dark rounded-lg text-xs font-bold cursor-pointer transition-all disabled:opacity-50"
+                    >
+                      {isSendingReply ? "Sending..." : "Send Reply"}
+                    </button>
+                  </div>
+                </div>
+              )}
+
             </div>
 
-            {/* Modal Close Button */}
-            <div className="flex justify-end pt-2 border-t border-white/5">
+            {/* Modal Actions Footer */}
+            <div className="flex flex-wrap items-center justify-between gap-3 pt-4 border-t border-white/10">
               <button
-                onClick={() => setSelectedLeadProfile(null)}
-                className="px-6 py-2 rounded-xl bg-navy-medium border border-white/10 hover:border-white/20 text-slate-200 hover:text-white text-xs sm:text-sm font-semibold cursor-pointer transition-colors"
+                onClick={() => handleDeleteLead(selectedLeadProfile.id)}
+                disabled={isDeleting}
+                className="px-4 py-2 rounded-xl bg-rose-600 hover:bg-rose-500 text-white text-xs font-bold cursor-pointer transition-colors disabled:opacity-50"
               >
-                Close Profile
+                {isDeleting ? "Deleting..." : "Delete Lead"}
               </button>
+
+              <div className="flex items-center gap-3">
+                {!showReplyForm && (
+                  <button
+                    onClick={() => {
+                      setReplySubject(`Re: Welcome Aboard! - Keerz Aviation Academy`);
+                      setReplyBody(`Hi ${selectedLeadProfile.full_name},\n\n`);
+                      setShowReplyForm(true);
+                    }}
+                    className="px-4 py-2 rounded-xl bg-sky-600 hover:bg-sky-500 text-white text-xs font-bold cursor-pointer transition-colors"
+                  >
+                    Reply to Candidate
+                  </button>
+                )}
+                <button
+                  onClick={() => {
+                    setSelectedLeadProfile(null);
+                    setShowReplyForm(false);
+                  }}
+                  className="px-5 py-2 rounded-xl bg-navy-medium border border-white/10 hover:border-white/20 text-slate-200 hover:text-white text-xs font-semibold cursor-pointer transition-colors"
+                >
+                  Close Profile
+                </button>
+              </div>
             </div>
 
           </div>
