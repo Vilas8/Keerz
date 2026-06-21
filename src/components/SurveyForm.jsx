@@ -1,6 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { supabase } from '../utils/supabaseClient';
-import { sendEmails } from '../utils/emailService';
 import { 
   Plane, User, Phone, Mail, MapPin, 
   GraduationCap, Calendar, Compass, Clock, 
@@ -178,9 +177,6 @@ export default function SurveyForm({ onSubmitSuccess }) {
       const { data, error } = await supabase.from('aviation_leads').insert([payload]);
 
       if (error) throw error;
-
-      // Dispatch automated thank-you and admin notification emails in background
-      sendEmails(payload).catch(err => console.error('Email dispatch failed:', err));
 
       // Celebrate & trigger success view
       if (typeof window !== 'undefined') {

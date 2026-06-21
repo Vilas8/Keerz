@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Plane, CheckCircle2, MapPin, Calendar, Clock, Printer, X, Download, Share2, Loader2 } from 'lucide-react';
 import html2canvas from 'html2canvas-pro';
+import { sendEmails } from '../utils/emailService';
 
 // Helper configuration for html2canvas-pro to handle inline SVGs and oklch styles correctly
 const getHtml2CanvasConfig = (ticketElement) => ({
@@ -59,6 +60,7 @@ export default function SuccessPopup({ leadData, onClose }) {
   const [sharing, setSharing] = useState(false);
   const [ticketImage, setTicketImage] = useState(null);
   const [ticketBlob, setTicketBlob] = useState(null);
+  const [emailSent, setEmailSent] = useState(false);
 
   useEffect(() => {
     // Trigger plane animation shortly after popup loads
@@ -89,6 +91,17 @@ export default function SuccessPopup({ leadData, onClose }) {
             setTicketBlob(blob);
           }
         }, 'image/png');
+
+        // Dispatch automated candidate and admin emails with the ticket image attached
+        setEmailSent((prev) => {
+          if (!prev) {
+            sendEmails(leadData, dataUrl).catch((err) => {
+              console.error('Email dispatch failed:', err);
+            });
+            return true;
+          }
+          return prev;
+        });
       } catch (err) {
         console.error('Failed to pre-generate ticket image:', err);
       }
