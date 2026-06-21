@@ -11,19 +11,16 @@ const getHtml2CanvasConfig = (ticketElement) => ({
   useCORS: true,
   allowTaint: false,
   logging: false,
-  width: 650,
-  scrollX: 0,
-  scrollY: 0,
   windowWidth: 1024,
   onclone: (clonedDoc) => {
     const ticketClone = clonedDoc.getElementById('printable-boarding-ticket');
     if (!ticketClone) return;
 
-    // Force a stable desktop dimensions in the cloned document
-    ticketClone.style.width = '650px';
-    ticketClone.style.minWidth = '650px';
-    ticketClone.style.height = 'auto';
-    ticketClone.style.position = 'relative';
+    // Ensure the perforation circles are visible in the download since they don't overlap in wide layout
+    const circles = ticketClone.querySelectorAll('.perforation-circle');
+    circles.forEach(c => {
+      c.style.display = 'block';
+    });
 
     const originalSvgs = ticketElement.querySelectorAll('svg');
     const clonedSvgs = ticketClone.querySelectorAll('svg');
@@ -49,10 +46,10 @@ const getHtml2CanvasConfig = (ticketElement) => ({
         clonedSvg.style.fill = computedStyle.fill;
       }
 
-      // Reset flight airplane takeoff animation to keep it static and visible
+      // Reset flight airplane takeoff animation and translation to keep it static and visible
       if (clonedSvg.classList.contains('text-gold-dark')) {
         clonedSvg.style.opacity = '1';
-        clonedSvg.style.transform = 'rotate(-12deg)';
+        clonedSvg.style.transform = 'translate(0px, 0px) rotate(-12deg)';
         clonedSvg.style.transition = 'none';
       } else {
         const originalTransform = computedStyle.transform;
@@ -61,6 +58,34 @@ const getHtml2CanvasConfig = (ticketElement) => ({
         }
       }
     });
+
+    // Move the ticket clone to a clean container at the top left of the body in the cloned document
+    // to bypass any parent constraints, scroll offsets, or modal overflow-hidden cropping.
+    clonedDoc.body.style.margin = '0';
+    clonedDoc.body.style.padding = '0';
+    clonedDoc.body.style.width = '1024px';
+    clonedDoc.body.style.height = 'auto';
+
+    const cleanContainer = clonedDoc.createElement('div');
+    cleanContainer.style.position = 'absolute';
+    cleanContainer.style.top = '0';
+    cleanContainer.style.left = '0';
+    cleanContainer.style.width = '640px';
+    cleanContainer.style.margin = '0';
+    cleanContainer.style.padding = '0';
+    cleanContainer.style.boxSizing = 'border-box';
+    cleanContainer.style.zIndex = '9999';
+
+    clonedDoc.body.appendChild(cleanContainer);
+    cleanContainer.appendChild(ticketClone);
+
+    // Force stable desktop-like dimensions on the ticket clone for capturing
+    ticketClone.style.width = '640px';
+    ticketClone.style.minWidth = '640px';
+    ticketClone.style.maxWidth = '640px';
+    ticketClone.style.height = 'auto';
+    ticketClone.style.margin = '0';
+    ticketClone.style.display = 'block';
   }
 });
 
@@ -343,8 +368,8 @@ export default function SuccessPopup({ leadData, onClose }) {
               className="bg-white text-navy-dark p-6 rounded-2xl border-2 border-dashed border-slate-300 relative overflow-hidden select-none"
             >
               {/* Perforation Left & Right indicators */}
-              <div className="absolute -left-3 top-[55%] w-6 h-6 rounded-full bg-slate-900 border border-slate-300" />
-              <div className="absolute -right-3 top-[55%] w-6 h-6 rounded-full bg-slate-900 border border-slate-300" />
+              <div className="absolute -left-3 top-[55%] w-6 h-6 rounded-full bg-slate-900 border border-slate-300 perforation-circle" />
+              <div className="absolute -right-3 top-[55%] w-6 h-6 rounded-full bg-slate-900 border border-slate-300 perforation-circle" />
 
               {/* Ticket Top bar */}
               <div className="flex items-center justify-between border-b-2 border-slate-100 pb-4 mb-4">
