@@ -1,7 +1,57 @@
 import React, { useEffect, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Plane, CheckCircle2, MapPin, Calendar, Clock, Printer, X, Download, Share2, Loader2 } from 'lucide-react';
-import html2canvas from 'html2canvas';
+import html2canvas from 'html2canvas-pro';
+
+// Helper configuration for html2canvas-pro to handle inline SVGs and oklch styles correctly
+const getHtml2CanvasConfig = (ticketElement) => ({
+  scale: 2,
+  backgroundColor: '#ffffff',
+  useCORS: true,
+  allowTaint: false,
+  logging: false,
+  onclone: (clonedDoc) => {
+    const ticketClone = clonedDoc.getElementById('printable-boarding-ticket');
+    if (!ticketClone) return;
+
+    const originalSvgs = ticketElement.querySelectorAll('svg');
+    const clonedSvgs = ticketClone.querySelectorAll('svg');
+
+    clonedSvgs.forEach((clonedSvg, index) => {
+      const originalSvg = originalSvgs[index];
+      if (!originalSvg) return;
+
+      const rect = originalSvg.getBoundingClientRect();
+      const computedStyle = window.getComputedStyle(originalSvg);
+
+      // Force explicit dimensions for SVG element rendering
+      clonedSvg.setAttribute('width', rect.width || 20);
+      clonedSvg.setAttribute('height', rect.height || 20);
+      clonedSvg.style.width = `${rect.width || 20}px`;
+      clonedSvg.style.height = `${rect.height || 20}px`;
+
+      // Copy fill and stroke styles directly inline to override oklch or class variables
+      if (computedStyle.stroke && computedStyle.stroke !== 'none') {
+        clonedSvg.style.stroke = computedStyle.stroke;
+      }
+      if (computedStyle.fill && computedStyle.fill !== 'none') {
+        clonedSvg.style.fill = computedStyle.fill;
+      }
+
+      // Reset flight airplane takeoff animation to keep it static and visible
+      if (clonedSvg.classList.contains('text-gold-dark')) {
+        clonedSvg.style.opacity = '1';
+        clonedSvg.style.transform = 'rotate(-12deg)';
+        clonedSvg.style.transition = 'none';
+      } else {
+        const originalTransform = computedStyle.transform;
+        if (originalTransform && originalTransform !== 'none') {
+          clonedSvg.style.transform = originalTransform;
+        }
+      }
+    });
+  }
+});
 
 export default function SuccessPopup({ leadData, onClose }) {
   const [takeoffActive, setTakeoffActive] = useState(false);
@@ -29,13 +79,7 @@ export default function SuccessPopup({ leadData, onClose }) {
         await new Promise(r => setTimeout(r, 800));
         
         const html2canvasFn = html2canvas.default || html2canvas;
-        const canvas = await html2canvasFn(ticketElement, {
-          scale: 2,
-          backgroundColor: '#ffffff',
-          useCORS: true,
-          allowTaint: false,
-          logging: false
-        });
+        const canvas = await html2canvasFn(ticketElement, getHtml2CanvasConfig(ticketElement));
 
         const dataUrl = canvas.toDataURL('image/png');
         setTicketImage(dataUrl);
@@ -67,13 +111,7 @@ export default function SuccessPopup({ leadData, onClose }) {
     try {
       await new Promise(r => setTimeout(r, 100));
       const html2canvasFn = html2canvas.default || html2canvas;
-      const canvas = await html2canvasFn(ticketElement, {
-        scale: 2,
-        backgroundColor: '#ffffff',
-        useCORS: true,
-        allowTaint: false,
-        logging: false
-      });
+      const canvas = await html2canvasFn(ticketElement, getHtml2CanvasConfig(ticketElement));
       
       canvas.toBlob((blob) => {
         if (blob) {
@@ -102,13 +140,7 @@ export default function SuccessPopup({ leadData, onClose }) {
     try {
       await new Promise(r => setTimeout(r, 100));
       const html2canvasFn = html2canvas.default || html2canvas;
-      const canvas = await html2canvasFn(ticketElement, {
-        scale: 2,
-        backgroundColor: '#ffffff',
-        useCORS: true,
-        allowTaint: false,
-        logging: false
-      });
+      const canvas = await html2canvasFn(ticketElement, getHtml2CanvasConfig(ticketElement));
       
       canvas.toBlob(async (blob) => {
         if (!blob) {
